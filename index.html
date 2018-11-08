@@ -1,25 +1,18 @@
 <!doctype html>
 <html>
   <head>
-    <title>Socket.IO chat</title>
+    <title>Dominó online</title>
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font: 13px Helvetica, Arial; }
-      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-      #messages { list-style-type: none; margin: 0; padding: 0; }
-      #messages li { padding: 5px 10px; }
-      #messages li:nth-child(odd) { background: #eee; }
+
     </style>
   </head>
   <body>
-    <h1>No se puede establecer conexion</h1>
-    <button type="button" name="button" id="start"> Iniciar juego</button>
+    <h1>Dominó online</h1>
+    <h2 id="client">No se puede establecer conexion</h2>
+    <button type="button" name="button" id="host"> Alojar juego</button>
+    <br>
+    <input id="joinSend" autocomplete="off" placeholder="Introducir ID Jugador" /><button id="join">Unirse al juego</button>
     <ul id="messages"></ul>
-    <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
-    </form>
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 <script>
@@ -27,25 +20,30 @@
     var socket = io();
     // When connected
     socket.on('connect', () => {
-      console.log(socket.connected); // true
-      $('h1').text("Game id: " + socket.id);
+      $('h2').text("ID Jugador: " + socket.id);
+    });
+    // When player joins room
+    socket.on('player connected', (msg) => {
+      alert(msg);
+      $('#messages').append($('<li>').text(msg));
     });
     // Join to game
-    $('form').submit(function(){
-      socket.emit('join game', $('#m').val());
-      $('#m').val('');
+    $('#join').click(function(){
+      socket.emit('join game', $('#joinSend').val());
+      console.log($('#joinSend').val());
+      $('#joinSend').val('');
       return false;
     });
     // Start game
-    $('#start').click(function() {
-      alert( "Handler for .click() called." );
-      socket.emit('start game', "Inicia el juego putos");
+    $('#host').click(function() {
+      alert( 'Alojar juego' );
+      socket.emit('host game', 'Optional password');
     });
     // Recieve moves
     socket.on('start game', function(msg){
+      console.log("Juego iniciado recibido");
       $('#messages').append($('<li>').text(msg));
     });
-
   });
 </script>
   </body>
