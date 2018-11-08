@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Dominó online</title>
+    <style>
+
+    </style>
+  </head>
+  <body>
+    <h1>Dominó online</h1>
+    <h2 id="client">No se puede establecer conexion</h2>
+    <button type="button" name="button" id="host"> Alojar juego</button>
+    <br>
+    <input id="joinSend" autocomplete="off" placeholder="Introducir ID Jugador" /><button id="join">Unirse al juego</button>
+    <ul id="messages"></ul>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script>
+  $(function () {
+    var socket = io();
+    // When connected
+    socket.on('connect', () => {
+      $('h2').text("ID Jugador: " + socket.id);
+    });
+    // When player joins room
+    socket.on('player connected', (msg) => {
+      alert(msg);
+      $('#messages').append($('<li>').text(msg));
+    });
+    // Join to game
+    $('#join').click(function(){
+      socket.emit('join game', $('#joinSend').val());
+      console.log($('#joinSend').val());
+      $('#joinSend').val('');
+      return false;
+    });
+    // Start game
+    $('#host').click(function() {
+      alert( 'Alojar juego' );
+      socket.emit('host game', 'Optional password');
+    });
+    // Recieve moves
+    socket.on('start game', function(msg){
+      console.log("Juego iniciado recibido");
+      $('#messages').append($('<li>').text(msg));
+    });
+  });
+</script>
+  </body>
+</html>
