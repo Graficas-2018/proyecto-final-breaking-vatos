@@ -22,6 +22,18 @@
     socket.on('connect', () => {
       $('h2').text("ID Jugador: " + socket.id);
     });
+    // If any error happens
+    socket.on('issue', (msg) => {
+      alert("Issue: " + msg);
+    });
+    // Host game
+    $('#host').click(function() {
+      socket.emit('host game', 'Optional password');
+    });
+    // Game created and waiting for players
+    socket.on('waiting', ()=>{
+      alert("Game created, waiting for players");
+    });
     // When player joins room
     socket.on('player connected', (msg) => {
       alert(msg);
@@ -30,14 +42,8 @@
     // Join to game
     $('#join').click(function(){
       socket.emit('join game', $('#joinSend').val());
-      console.log($('#joinSend').val());
       $('#joinSend').val('');
       return false;
-    });
-    // Start game
-    $('#host').click(function() {
-      alert( 'Alojar juego' );
-      socket.emit('host game', 'Optional password');
     });
     // Recieve moves
     socket.on('start game', function(msg){

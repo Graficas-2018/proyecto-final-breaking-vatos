@@ -1,8 +1,10 @@
+var HashMap = require('hashmap');
+
 // assigning to exports will not modify module, must use module.exports
 module.exports = class Game {
   constructor() {
     // Array of players
-    this.players = [];
+    this.players = new HashMap();
     this.tiles = [];
     this.tiles.push({l1: 0, l2: 0});
     this.tiles.push({l1: 0, l2: 1});
@@ -42,9 +44,22 @@ module.exports = class Game {
   }
 
   addPlayer(){
-    this.players.push({
-      score:0,
-    });
+    if (this.players.size < 4) {
+
+    } else {
+
+    }
+    //this.players.push({
+      //score:0,
+    //});
+  }
+
+  setTeams(){
+    if (this.players.size == 4) {
+
+    } else {
+
+    }
   }
 
   nextTurn() {

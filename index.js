@@ -42,11 +42,13 @@ io.on('connection', function(socket){
       //Add player to host room
       socket.join(room);
       console.log(socket.id + " joined to room: " + room);
+      // Add player in game
+      games.get(room).addPlayer();
       // Notify players of joined player
       socket.broadcast.to(room).emit('player connected', 'Se ha conectado el jugador: ' + socket.id);
     } else {
       // Error no game
-
+      socket.emit('issue', 'El juego no existe');
     }
   });
 
