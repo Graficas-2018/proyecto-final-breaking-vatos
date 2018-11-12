@@ -63,6 +63,6 @@ module.exports = class Game {
   }
 
   nextTurn() {
-    return this.width ** 2;
+    return this.width * 2;
   }
 };

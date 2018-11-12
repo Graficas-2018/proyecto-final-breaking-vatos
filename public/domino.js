@@ -6,11 +6,37 @@ gun = null,
 monster = null,
 group = null,
 orbitControls = null;
-
-var objLoader = null, jsonLoader = null;
+var maxPuntos = 6;
+var objLoader = null, mtlLoader = null;
 
 var duration = 20000; // ms
 var currentTime = Date.now();
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+function loadDominoTiles(i,j){
+    if(!objLoader){
+      objLoader = new THREE.OBJLoader();
+    }
+    if(!mtlLoader){
+      mtlLoader = new THREE.MTLLoader();
+    }
+
+    var dominoTileMTL = "./Models/"+i+"-"+j+".mtl";
+    var dominoTileOBJ = "./Models/"+i+"-"+j+".obj";
+    mtlLoader.load(dominoTileMTL, (materials)=>{
+      materials.preload();
+      objLoader.setMaterials(materials);
+      objLoader.load(dominoTileOBJ, (object)=>{
+        object.position.set(getRandomInt(0, 10),getRandomInt(0, 10),getRandomInt(0, 50));
+        scene.add(object);
+      });
+    });
+  }
+
+
 
 
 
@@ -54,7 +80,15 @@ var ambientLight = null;
 var SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 2048;
 
 function createScene(canvas) {
-
+  for (var i = 0; i <= maxPuntos; i++) {
+    var last = i;
+    for(var j = 0; j<=maxPuntos;j++){
+      if (i > 0 && last > j) {
+        j = last;
+      }
+      loadDominoTiles(i,j);
+    }
+  }
     // Create the Three.js renderer and attach it to our canvas
     renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true } );
     // Set the viewport size
