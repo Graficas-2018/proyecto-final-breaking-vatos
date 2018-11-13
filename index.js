@@ -30,15 +30,23 @@ var games = new HashMap();
 io.on('connection', function(socket){
 
   //Create new game
-  socket.on('host game', function (password) {
-    console.log('Alojando juego, ID: ' + socket.id + ' op pass: ' + password);
+  socket.on('host game', function (obj) {
+    console.log('Alojando juego, ID: ' + socket.id + ' op pass: ' + obj.password);
     games.set(socket.id , new game());
+    // Add player
+    games.get(socket.id).addPlayer(socket.id, obj.name);
+    //Emit created game
+    socket.emit('game created', games.get(socket.id).players.entries());
   });
 
   //Join other player game
   socket.on('join game', function (room) {
     // Verify game exists
     if (games.has(room)) {
+      //Try to add player
+      if(!games.get(room).addPlayer(socket.id, "Nombre")){
+        socket.emit('issue', 'No se pudo agregar al jugador');
+      }
       //Add player to host room
       socket.join(room);
       console.log(socket.id + " joined to room: " + room);
@@ -46,6 +54,7 @@ io.on('connection', function(socket){
       games.get(room).addPlayer();
       // Notify players of joined player
       socket.broadcast.to(room).emit('player connected', 'Se ha conectado el jugador: ' + socket.id);
+      socket.emit('game created', true);
     } else {
       // Error no game
       socket.emit('issue', 'El juego no existe');

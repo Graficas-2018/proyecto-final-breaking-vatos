@@ -7,15 +7,25 @@
 <body>
   <h1>Dominó online</h1>
   <h2 id="client">No se puede establecer conexion</h2>
-  <button type="button" name="button" id="host"> Alojar juego</button>
-  <br>
-  <input id="joinSend" autocomplete="off" placeholder="Introducir ID Jugador" /><button id="join">Unirse al juego</button>
+  <ul id="players"></ul>
   <ul id="messages"></ul>
-  <!-- Button trigger modal -->
-  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
-    Launch demo modal
-  </button>
-  <!-- Modal -->
+  <!-- Modal alojar join -->
+  <div class="modal fade" id="joinModal" tabindex="-1" role="dialog" aria-labelledby="joinModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-body text-center">
+          <div class="row">
+            <button id="host" type="button" class="btn btn-primary">Alojar Juego</button>
+          </div>
+          <div class="row pt-2">
+            <input id="joinSend" autocomplete="off" placeholder="Introducir ID Jugador" />
+            <button id="joinButton" type="button" class="btn btn-primary">Unirse a Juego</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal nombre -->
   <div class="modal fade" id="nameModal" tabindex="-1" role="dialog" aria-labelledby="nameModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
@@ -69,16 +79,27 @@
     });
     // Ask for name
     $('#nameButton').click(function(){
+      if($('#name').val() == ''){
+        return;
+      }
       name = $('#name').val();
       console.log($('#joinSend').val());
       // Hide Modal
       $('#nameModal').modal('hide');
       $('body').removeClass('modal-open');
       $('.modal-backdrop').remove();
+      // Show host or join
+      $('#joinModal').modal({
+        keyboard: false,
+        show: true,
+        backdrop: 'static'
+      });
     });
+    // Ask to host or join
+
     // Host game
     $('#host').click(function() {
-      socket.emit('host game', 'Optional password');
+      socket.emit('host game', {name:name, password: 'Optional password'});
     });
     // Game created and waiting for players
     socket.on('waiting', ()=>{
@@ -90,15 +111,19 @@
       $('#messages').append($('<li>').text(msg));
     });
     // Join to game
-    $('#join').click(function(){
+    $('#joinButton').click(function(){
       socket.emit('join game', $('#joinSend').val());
       $('#joinSend').val('');
       return false;
     });
-    // Recieve moves
-    socket.on('start game', function(msg){
+    // Recieve created
+    socket.on('game created', function(msg){
       console.log("Juego iniciado recibido");
-      $('#messages').append($('<li>').text(msg));
+      $('#messages').append($('<li>').text(msg.name));
+      // Hide Modal
+      $('#joinModal').modal('hide');
+      $('body').removeClass('modal-open');
+      $('.modal-backdrop').remove();
     });
     // If any error happens
     socket.on('issue', (msg) => {

@@ -1,4 +1,5 @@
 var HashMap = require('hashmap');
+var Player = require('./player.js');
 
 // assigning to exports will not modify module, must use module.exports
 module.exports = class Game {
@@ -43,22 +44,29 @@ module.exports = class Game {
     }
   }
 
-  addPlayer(){
-    if (this.players.size < 4) {
-
-    } else {
-
-    }
-    //this.players.push({
-      //score:0,
-    //});
+  handOutTiles(){
+    this.players.forEach(function(value, key) {
+      //Set the next 7 tiles
+      this.players.get(key).setTiles(this.tiles.splice(0,6));
+      //console.log(key + " : " + value);
+    });
   }
 
-  setTeams(){
+  addPlayer(socketId, name){
+    var player = new Player(socketId, name);
+    if (this.players.size < 4) {
+      this.players.set(socketId, player);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  setTeams(teams){
     if (this.players.size == 4) {
 
     } else {
-
+      return false;
     }
   }
 
