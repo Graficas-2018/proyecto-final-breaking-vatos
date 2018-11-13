@@ -10,9 +10,9 @@ app.use(compression());
 // Serve static assets
 app.use('/game', express.static('public'));
 // HTML only to test socket
-app.get('/', function(req, res){
-  res.sendFile(__dirname + '/index.html');
-});
+//app.get('/', function(req, res){
+  //res.sendFile(__dirname + '/index.html');
+//});
 
 // For every socket host new game
 io.use(function(socket, next) {
@@ -34,27 +34,29 @@ io.on('connection', function(socket){
     console.log('Alojando juego, ID: ' + socket.id + ' op pass: ' + obj.password);
     games.set(socket.id , new game());
     // Add player
+    console.log(obj);
     games.get(socket.id).addPlayer(socket.id, obj.name);
-    //Emit created game
-    socket.emit('game created', games.get(socket.id).players.entries());
+    //Emit waiting for players
+    socket.emit('game created', true);
+    socket.emit('waiting players', games.get(socket.id).players.values());
   });
 
   //Join other player game
-  socket.on('join game', function (room) {
+  socket.on('join game', function (obj) {
     // Verify game exists
-    if (games.has(room)) {
+    if (games.has(obj.hostId)) {
       //Try to add player
-      if(!games.get(room).addPlayer(socket.id, "Nombre")){
+      if(!games.get(obj.hostId).addPlayer(socket.id, obj.name)){
         socket.emit('issue', 'No se pudo agregar al jugador');
+        return;
       }
       //Add player to host room
-      socket.join(room);
-      console.log(socket.id + " joined to room: " + room);
-      // Add player in game
-      games.get(room).addPlayer();
+      socket.join(obj.hostId);
+      console.log(socket.id + " joined to room: " + obj.hostId);
       // Notify players of joined player
-      socket.broadcast.to(room).emit('player connected', 'Se ha conectado el jugador: ' + socket.id);
       socket.emit('game created', true);
+      socket.broadcast.to(obj.hostId).emit('waiting players', games.get(obj.hostId).players.values());
+      socket.emit('waiting players', games.get(obj.hostId).players.values());
     } else {
       // Error no game
       socket.emit('issue', 'El juego no existe');
@@ -64,7 +66,20 @@ io.on('connection', function(socket){
   // Iniciar juego
   socket.on('start game', function(msg){
     console.log('Game started');
-    io.broadcast.to(socket.id).emit('start game', msg);
+    //Call start game
+    games.get(socket.id).startGame();
+    // Send tiles to players
+    for (player of games.get(socket.id).players.values()) {
+      io.sockets.connected[player.socketId].emit('game started', player.tiles);
+    }
+    // Send nextTurn as random
+    //io.to(socket.id).emit('game started', msg);
+  });
+
+  //Siguiente movimiento
+  socket.on('next move', function(msg){
+    // Movimiento y a quien le va
+    console.log('Next move');
   });
 
 });

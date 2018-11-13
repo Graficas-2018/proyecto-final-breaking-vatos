@@ -37,6 +37,11 @@ module.exports = class Game {
     this.tiles.push({l1: 6, l2: 6});
   }
 
+  startGame(){
+    this.shuffletiles();
+    this.handOutTiles();
+  }
+
   shuffletiles() {
     for (let i = this.tiles.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -45,10 +50,11 @@ module.exports = class Game {
   }
 
   handOutTiles(){
+    var _this = this;
     this.players.forEach(function(value, key) {
+      console.log(key + " : " + value);
       //Set the next 7 tiles
-      this.players.get(key).setTiles(this.tiles.splice(0,6));
-      //console.log(key + " : " + value);
+      _this.players.get(key).setTiles(_this.tiles.splice(0,7));
     });
   }
 
