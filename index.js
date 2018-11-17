@@ -72,14 +72,15 @@ io.on('connection', function(socket){
     for (player of games.get(socket.id).players.values()) {
       io.sockets.connected[player.socketId].emit('game started', player.tiles);
     }
-    // Send nextTurn as random
-    //io.to(socket.id).emit('game started', msg);
+    // Send nextTurn to the host
+    socket.emit('next turn', {nextTurn:socket.id, previousMove:null});
   });
 
   //Siguiente movimiento
-  socket.on('next move', function(msg){
-    // Movimiento y a quien le va
-    console.log('Next move');
+  socket.on('next move', function(move){
+    console.log("Jugador " + socket.id + " movio ficha: " + move.l1 + ":" + move.l2);
+    // Notificar movimiento y a quien le va
+    socket.emit('next turn', {nextTurn:socket.id, previousMove:move});
   });
 
 });

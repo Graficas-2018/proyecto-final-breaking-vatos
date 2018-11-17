@@ -82,6 +82,30 @@ $(function () {
     alert(msg);
     $('#messages').append($('<li>').text(msg));
   });
+  // When next turn of game
+  socket.on('next turn', (obj) => {
+    //Actualizar movimientos
+    if (obj.previousMove !=  null) {
+      $('#messages').append($('<li>').text("El jugador x  puso la ficha" + obj.previousMove.l1+ ":" + obj.previousMove.l2));
+    }
+    // Si no es el turno no hacer nada
+    if (obj.nextTurn != socket.id) {
+      return;
+    }
+    alert("Es tu turno");
+    // Habilitar mover ficha
+
+    // Verificar movimiento
+
+    // Quitar ficha del jugador
+    console.log(tiles);
+    var tile = tiles[0];
+    console.log(tile);
+    tiles.splice(0,1);
+    console.log("TILE:" + tile.l1);
+    //Enviar movimiento
+    socket.emit('next move', tile);
+  });
   // If any error happens
   socket.on('issue', (msg) => {
     alert("Issue: " + msg);
