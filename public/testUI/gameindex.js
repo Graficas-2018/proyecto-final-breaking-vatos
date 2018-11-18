@@ -42,11 +42,13 @@ $(function () {
   });
   // Host game
   $('#host').click(function() {
+    gameId = socket.id;
     socket.emit('host game', {name:name, password: 'Optional password'});
   });
   // Join to game
   $('#joinButton').click(function(){
     socket.emit('join game', {hostId: $('#joinSend').val(), name: name});
+    gameId = $('#joinSend').val();
     $('#joinSend').val('');
     return false;
   });
@@ -82,30 +84,67 @@ $(function () {
     alert(msg);
     $('#messages').append($('<li>').text(msg));
   });
+
   // When next turn of game
   socket.on('next turn', (obj) => {
-    //Actualizar movimientos
-    if (obj.previousMove !=  null) {
-      $('#messages').append($('<li>').text("El jugador x  puso la ficha" + obj.previousMove.l1+ ":" + obj.previousMove.l2));
-    }
-    // Si no es el turno no hacer nada
-    if (obj.nextTurn != socket.id) {
-      return;
-    }
-    alert("Es tu turno");
-    // Habilitar mover ficha
+    console.log("NUEVO TURNO");
+    if (obj.player == socket.id) {
+      alert("Es tu turno");
+      // Habilitar mover ficha
 
-    // Verificar movimiento
+      // Verificar movimiento
 
-    // Quitar ficha del jugador
-    console.log(tiles);
-    var tile = tiles[0];
-    console.log(tile);
-    tiles.splice(0,1);
-    console.log("TILE:" + tile.l1);
-    //Enviar movimiento
-    socket.emit('next move', tile);
+      // Quitar ficha del jugador
+      // tiles.splice(0,1);
+
+      //Enviar movimiento
+    }
   });
+
+  // Cuando se recibe un movimiento
+  socket.on('new move', (move) => {
+    console.log(move);
+    if (move.tile != null) {
+      $('#messages').append($('<li>').text("El jugador "+ move.player +"  puso la ficha" + move.tile.l1 + ":" + move.tile.l2));
+    }
+    //Actualizar movimientos
+  });
+
+  // Cuando un jugador envía un movimiento
+  $('#moveButton').click(function(){
+    var move = {};
+    move.gameId = gameId;
+    var tile = {};
+    tile.l1 = 0;
+    tile.l2 = 1;
+    move.tile = tile;
+    socket.emit('send move', move);
+    // Si se trata de un "pase" envia null
+    //move.tile = null;
+    //socket.emit('send move', move);
+  });
+
+  //If user needs to get additional tile
+  $('#tileButton').click(function(){
+    socket.emit('request tile', gameId);
+  });
+
+  //When tile is received
+  socket.on('new tile', (tile) => {
+    console.log(tile);
+    $('#messages').append($('<li>').text(tile));
+  });
+
+  // When game is over
+  $('#overButton').click(function(){
+    socket.emit('game over', gameId);
+  });
+
+  //When game over
+  socket.on('game over', (tile) => {
+    $('#messages').append($('<li>').text(" GAME OVER "));
+  });
+
   // If any error happens
   socket.on('issue', (msg) => {
     alert("Issue: " + msg);

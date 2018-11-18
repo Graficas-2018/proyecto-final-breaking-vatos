@@ -73,14 +73,31 @@ io.on('connection', function(socket){
       io.sockets.connected[player.socketId].emit('game started', player.tiles);
     }
     // Send nextTurn to the host
-    socket.emit('next turn', {nextTurn:socket.id, previousMove:null});
+    io.to(socket.id).emit('next turn', {player: games.get(socket.id).nextTurn()});
   });
 
   //Siguiente movimiento
-  socket.on('next move', function(move){
-    console.log("Jugador " + socket.id + " movio ficha: " + move.l1 + ":" + move.l2);
-    // Notificar movimiento y a quien le va
-    socket.emit('next turn', {nextTurn:socket.id, previousMove:move});
+  socket.on('send move', function(move){
+    if (move != null) {
+      // Notificar movimiento y a quien le va
+      io.to(move.gameId).emit('new move', {player: socket.id, tile: move.tile});
+      io.to(move.gameId).emit('next turn', {player: games.get(move.gameId).nextTurn()});
+      //socket.broadcast.to(games.get(move.gameId).nextTurn()).emit('next turn', null);
+    }
+    //console.log("Jugador " + socket.id + " movio ficha: " + move.l1 + ":" + move.l2);
+  });
+
+  // Cuando come fichas
+  socket.on('request tile', function(gameId){
+    // Ask game for tile and emit
+    socket.emit('new tile', games.get(gameId).getTile());
+  });
+
+  // Cuando un jugador gana o se cierra el juego
+  socket.on('game over', function(gameId){
+    // End game
+    io.to(gameId).emit('game over');
+    games.delete(gameId);
   });
 
 });

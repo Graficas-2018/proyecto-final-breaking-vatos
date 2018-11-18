@@ -35,6 +35,7 @@ module.exports = class Game {
     this.tiles.push({l1: 5, l2: 5});
     this.tiles.push({l1: 5, l2: 6});
     this.tiles.push({l1: 6, l2: 6});
+    this.turn = -1;
   }
 
   startGame(){
@@ -58,6 +59,14 @@ module.exports = class Game {
     });
   }
 
+  getTile(){
+    if (this.tiles.length > 0) {
+      return this.tiles.splice(0,1);
+    } else {
+      return null;
+    }
+  }
+
   addPlayer(socketId, name){
     var player = new Player(socketId, name);
     if (this.players.size < 4) {
@@ -77,6 +86,11 @@ module.exports = class Game {
   }
 
   nextTurn() {
-    return this.width * 2;
+    var p = this.players.keys();
+    this.turn++;
+    if (this.turn >= this.players.size) {
+      this.turn = 0;
+    }
+    return p[this.turn];
   }
 };
