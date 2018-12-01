@@ -5,6 +5,7 @@ root = null,
 gun = null,
 monster = null,
 group = null,
+reflectionCube = null,
 orbitControls = null;
 var maxPuntos = 6;
 var objLoader = null, mtlLoader = null;
@@ -35,10 +36,6 @@ function loadDominoTiles(i,j){
       });
     });
   }
-
-
-
-
 
 function animate() {
 
@@ -89,6 +86,7 @@ function createScene(canvas) {
       loadDominoTiles(i,j);
     }
   }
+
     // Create the Three.js renderer and attach it to our canvas
     renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true } );
     // Set the viewport size
@@ -99,29 +97,24 @@ function createScene(canvas) {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     //cubemap
-		var path = "images/cubemap/";
-		var format = '.png';
+    var path = "images/cubemap/park/";
+    var format = '.png';
 
     var urls = [
-			path + 'px' + format, path + 'nx' + format,
-			path + 'py' + format, path + 'ny' + format,
-			path + 'pz' + format, path + 'nz' + format
-		];
-
-		var reflectionCube = new THREE.CubeTextureLoader().load( urls );
-
-		reflectionCube.format = THREE.RGBFormat;
-
-		var refractionCube = new THREE.CubeTextureLoader().load( urls );
-
-    refractionCube.mapping = THREE.CubeRefractionMapping;
-
-    refractionCube.format = THREE.RGBFormat;
+      path + 'px' + format, path + 'nx' + format,
+      path + 'py' + format, path + 'ny' + format,
+      path + 'pz' + format, path + 'nz' + format
+    ];
 
     // Create a new Three.js scene
     scene = new THREE.Scene();
 
-    scene.background = reflectionCube;
+    new THREE.CubeTextureLoader().load(urls, function(reflectionCube)
+    {
+      reflectionCube.format = THREE.RGBFormat;
+      scene.background = reflectionCube;
+      renderer.render( scene, camera );
+    });
 
     // Add  a camera so we can view the scene
     camera = new THREE.PerspectiveCamera( 45, canvas.width / canvas.height, 1, 4000 );
