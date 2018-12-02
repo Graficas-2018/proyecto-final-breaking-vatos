@@ -5,13 +5,14 @@ root = null,
 gun = null,
 monster = null,
 group = null,
-fichas = [],
-orbitControls = null, raycaster = null;
+reflectionCube = null,
+orbitControls = null;
 var maxPuntos = 6;
 var objLoader = null, mtlLoader = null;
-var fichasJugador= [];
+
 var duration = 20000; // ms
 var currentTime = Date.now();
+
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
@@ -30,36 +31,14 @@ function loadDominoTiles(i,j){
       materials.preload();
       objLoader.setMaterials(materials);
       objLoader.load(dominoTileOBJ, (object)=>{
-        object.l1 = i;
-        object.l2 = j;
-        fichas.push(object);
-        //object.position.set(getRandomInt(0, 10),getRandomInt(0, 10),getRandomInt(0, 50));
-        console.log(object);
-        //scene.add(object);
+        object.position.set(getRandomInt(0, 10),getRandomInt(0, 10),getRandomInt(0, 50));
+        scene.add(object);
       });
     });
-
-    var plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(500, 500, 8, 8), new THREE.MeshBasicMaterial({color: 0xffffff}));
-    plane.visible = false;
-    scene.add(plane);
   }
-
-function onDocumentMouseDown(event){
-  var mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-  var mouseY = (event.clientY / window.innerHeight) * 2 + 1;
-  var vector = new THREE.Vector3(mouseX, mouseY, 1);
-  vector.unproject(camera);
-  raycaster.set(camera.position,vector.sub(camera.position).normalize());
-  var intersects = raycaster.intersectObjects(fichasJugador,true);
-  if(intersects.length > 0){
-    orbitControls.enabled= false;
-
-  }
-}
-
-
 
 function animate() {
+
     var now = Date.now();
     var deltat = now - currentTime;
     currentTime = now;
@@ -89,9 +68,7 @@ function setLightColor(light, r, g, b)
     light.color.setRGB(r, g, b);
 }
 
-function setFichasJugador(ob){
-  //fichasJugador
-}
+
 
 var directionalLight = null;
 var spotLight = null;
@@ -109,6 +86,7 @@ function createScene(canvas) {
       loadDominoTiles(i,j);
     }
   }
+
     // Create the Three.js renderer and attach it to our canvas
     renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true } );
     // Set the viewport size
@@ -119,29 +97,24 @@ function createScene(canvas) {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     //cubemap
-		var path = "images/cubemap/";
-		var format = '.png';
+    var path = "images/cubemap/park/";
+    var format = '.png';
 
     var urls = [
-			path + 'px' + format, path + 'nx' + format,
-			path + 'py' + format, path + 'ny' + format,
-			path + 'pz' + format, path + 'nz' + format
-		];
+      path + 'px' + format, path + 'nx' + format,
+      path + 'py' + format, path + 'ny' + format,
+      path + 'pz' + format, path + 'nz' + format
+    ];
 
-		var reflectionCube = new THREE.CubeTextureLoader().load( urls );
-
-		reflectionCube.format = THREE.RGBFormat;
-
-		var refractionCube = new THREE.CubeTextureLoader().load( urls );
-
-    refractionCube.mapping = THREE.CubeRefractionMapping;
-
-    refractionCube.format = THREE.RGBFormat;
-    raycaster = new THREE.Raycaster;
     // Create a new Three.js scene
     scene = new THREE.Scene();
 
-    scene.background = reflectionCube;
+    new THREE.CubeTextureLoader().load(urls, function(reflectionCube)
+    {
+      reflectionCube.format = THREE.RGBFormat;
+      scene.background = reflectionCube;
+      renderer.render( scene, camera );
+    });
 
     // Add  a camera so we can view the scene
     camera = new THREE.PerspectiveCamera( 45, canvas.width / canvas.height, 1, 4000 );
@@ -180,5 +153,5 @@ function createScene(canvas) {
     root.add(group);
 
     // Now add the group to our scene
-    scene.add(root);
+    scene.add( root );
 }
