@@ -2,18 +2,27 @@ var renderer = null,
 scene = null,
 camera = null,
 root = null,
-gun = null,
-monster = null,
+table = null,
+reflectionCube = null,
 group = null,
 socket = null,
 selection = null,
 gameId = null,
 fichas = [],tiles=null,
 movimientoValido = false, primerMovimiento = true,turnoJugador = false,numberLeft = -1, numberRight = -1,fichasIniciales = 7,
+<<<<<<< HEAD
 orbitControls = null, raycaster = null, dragControls = null, infoGame= null, lastTile=null, jugadorContinua = true;
+=======
+orbitControls = null, raycaster = null, dragControls = null, infoGame= null, lastTile=null,
+destX = 0,
+destY = 0,
+destZ = 0;
+>>>>>>> 952f1961b5e55e4131c2b32e33463351671391f3
 var mouse = new THREE.Vector2();
 var maxPuntos = 6;
 var objLoader = null, mtlLoader = null;
+var objAM = null;
+var movimiento = false;
 var fichasJugador= [];
 var duration = 20000; // ms
 var currentTime = Date.now();
@@ -31,6 +40,8 @@ function onWindowResize()
 
 function initControls(){
     orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+    orbitControls.minDistance = 0;
+    orbitControls.maxDistance = 70;
     dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement );
 		dragControls.addEventListener( 'dragstart', function (event) {
       if(!turnoJugador){
@@ -148,12 +159,121 @@ function loadDominoTiles(i,j,k){
     return "[ " + v.x + ", " + v.y + ", " + v.z + " ]";
   }
 
-function animate() {
-    /*var now = Date.now();
+function loadTable()
+{
+    if(!objLoader)
+        objLoader = new THREE.OBJLoader();
+
+    objLoader.load(
+        '../Models/table/classic_dining_table.obj',
+        function(object)
+        {
+            var texture = new THREE.TextureLoader().load('../Models/table/wood-textures_00399209.jpg');
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(3, 1);
+            var specularMap = new THREE.TextureLoader().load('../Models/table/Twilight_r.jpg');
+
+            object.traverse( function ( child )
+            {
+                if ( child instanceof THREE.Mesh )
+                {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    child.material.map = texture;
+                    child.material.specularMap = specularMap;
+                }
+            } );
+
+            table = object;
+            table.scale.set(2,2,6);
+            table.position.set(0,-66.5,0);
+            scene.add(object);
+        },
+        function ( xhr ) {
+            console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+        },
+        // called when loading has errors
+        function ( error ) {
+            console.log( 'An error happened' );
+        });
+}
+
+function translateObj(object, end)
+{
+    objAM = object;
+    destX = end.x;
+    destY = end.y;
+    destZ = end.z;
+    movimiento = true;
+}
+
+function inRange(val1, val2)
+{
+  if(Math.abs(Math.abs(val1) - Math.abs(val2)) <= 0.5)
+  {
+      return true;
+  }
+  return false;
+}
+
+
+
+function animate()
+{
+    var now = Date.now();
     var deltat = now - currentTime;
     currentTime = now;
     var fract = deltat / duration;
-    var angle = Math.PI * 2 * fract;*/
+    var angle = Math.PI * 2 * fract;
+
+    if(movimiento)
+    {
+      if(inRange(destX, objAM.position.x))
+      {
+        objAM.position.x = destX;
+      }
+      if(inRange(destY, objAM.position.y))
+      {
+        objAM.position.y = destY;
+      }
+      if(inRange(destZ, objAM.position.z))
+      {
+        objAM.position.z = destZ;
+      }
+
+      if(inRange(destX, objAM.position.x) && inRange(destY, objAM.position.y) && inRange(destZ, objAM.position.z))
+      {
+        movimiento = false;
+        return;
+      }
+
+      if(destX > objAM.position.x)
+      {
+          objAM.position.x += 0.05 * deltat;
+      }
+      else if(destX < objAM.position.x)
+      {
+          objAM.position.x -= 0.05 * deltat;
+      }
+
+      if(destY > objAM.position.y)
+      {
+          objAM.position.y += 0.05 * deltat;
+      }
+      else if(destY < objAM.position.y)
+      {
+          objAM.position.y -= 0.05 * deltat;
+      }
+
+      if(destZ > objAM.position.z)
+      {
+          objAM.position.z += 0.05 * deltat;
+      }
+      else if(destZ < objAM.position.z)
+      {
+          objAM.position.z -= 0.05 * deltat;
+      }
+    }
 }
 
 function run() {
@@ -198,8 +318,8 @@ function createScene(canvas) {
     // Options are THREE.BasicShadowMap, THREE.PCFShadowMap, PCFSoftShadowMap
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    /*/cubemap
-		var path = "../images/cubemap/park/";
+    //*/cubemap
+		/*var path = "../images/cubemap/park/";
 		var format = '.png';
 
     var urls = [
@@ -215,6 +335,8 @@ function createScene(canvas) {
       renderer.render( scene, camera );
     });*/
 
+    loadTable();
+
     // Add  a camera so we can view the scene
     camera = new THREE.PerspectiveCamera( 45, canvas.width / canvas.height, 1, 4000 );
     camera.position.set(-2, 6, 12);
@@ -224,6 +346,13 @@ function createScene(canvas) {
     root = new THREE.Object3D;
     ambientLight = new THREE.AmbientLight ( 0xffffff );
     root.add(ambientLight);
+
+    // Add a directional light to show off the object
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 1);
+
+    // Create and add all the lights
+    directionalLight.position.set(0, 100, 0);
+    root.add(directionalLight);
 
     // Create a group to hold the objects
     group = new THREE.Object3D;
