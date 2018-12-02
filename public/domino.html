@@ -10,6 +10,7 @@
 <script src="libs/three.js/three.js"></script>
 <script src="libs/three.js/controls/OrbitControls.js"></script>
 <script src="libs/three.js/loaders/inflate.min.js"></script>
+<script src="libs/three.js/loaders/FBXLoader.js"></script>
 <script src="libs/three.js/loaders/OBJLoader.js"></script>
 <script src="libs/three.js/loaders/MTLLoader.js"></script>
 <script src="ui.js"></script>
@@ -34,6 +35,7 @@
 				var canvas = document.getElementById("webglcanvas");
         canvas.width = window.innerWidth;
 			  canvas.height = window.innerHeight;
+        document.addEventListener("keydown", onKeyDown, false);
 
 				// create the scene
 				createScene(canvas);
