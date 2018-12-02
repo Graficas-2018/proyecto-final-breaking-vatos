@@ -15,6 +15,7 @@ var objLoader = null, mtlLoader = null;
 var movimiento = false;
 var objAM = null;
 var dominoes = [];
+var turn = false;
 var duration = 20000; // ms
 var currentTime = Date.now();
 
@@ -47,6 +48,26 @@ function loadDominoTiles(i,j)
     });
 }
 
+function hideDominoes(objects)
+{
+  for (var i = 0; i < objects.length; i++)
+  {
+    objects[i].traverse( function ( child )
+    {
+        if ( child instanceof THREE.Mesh )
+        {
+            if(child.visible)
+            {
+              child.visible = false;
+            }
+            else
+            {
+              child.visible = true;
+            }
+        }
+    });
+  }
+}
 
 function loadTable()
 {
@@ -111,24 +132,71 @@ function onKeyDown(event)
     switch(event.keyCode)
     {
         case 37: //Left
-            translateObj(dominoes[0],new THREE.Vector3(getRandomInt(0, 10), -3.7, getRandomInt(0, 10)));
+            //translateObj(dominoes[0],new THREE.Vector3(getRandomInt(0, 10), -3.7, getRandomInt(0, 10)));
             //console.log("izquierda");
+            putDominoesOnCamera(dominoes);
             break;
         case 38: //Up
-            translateObj(dominoes[1],new THREE.Vector3(getRandomInt(0, 10), -3.7, getRandomInt(0, 10)));
+            //translateObj(dominoes[1],new THREE.Vector3(getRandomInt(0, 10), -3.7, getRandomInt(0, 10)));
             //console.log("arriba");
+            changeCamera();
             break;
         case 39: //Right
             translateObj(dominoes[2],new THREE.Vector3(getRandomInt(0, 10), -3.7, getRandomInt(0, 10)));
             //console.log("derecha");
             break;
         case 40: //Down
-            translateObj(dominoes[3],new THREE.Vector3(getRandomInt(0, 10), -3.7, getRandomInt(0, 10)));
+            //translateObj(dominoes[3],new THREE.Vector3(getRandomInt(0, 10), -3.7, getRandomInt(0, 10)));
+            hideDominoes(dominoes);
             //console.log("abajo");
             break;
     }
 }
 
+function putDominoesOnCamera(objects) //Es necesario remover las fichas como hijos de la cámara para ponerlas despues
+{
+  //Remueve las fichas como hijas de la cámara para volver a ser acomodadas
+  for (var i = camera.children.length - 1; i >= 0; i--)
+  {
+      camera.remove(camera.children[i]);
+  }
+
+
+  var files = 0;
+  if(objects.length <= 7)
+    files = 1;
+  else if(objects.length <= 14)
+    files = 2;
+  else if(objects.length <= 21)
+    files = 3;
+  else
+    files = 4;
+
+  //1 fila es 22 en x y 12 en y         3
+  //2 filas es 44 en x y 24 en y        3 y 9
+  //3 filas es 66 en x y 36 en y        3 y 9 y 15
+  //4 filas es 88 en x y 48 en y        3 y 9 y 15 y 21
+
+  var far = files * -15;
+
+  for (var i = 0; i < files; i++)
+  {
+    for (var j = (i*7); j < ((i*7)+7); j++)
+    {
+      if(j < objects.length)
+      {
+        camera.add(objects[j]);
+        objects[j].position.set((7.25 * files) - ((j - (i*7)) * (2.5 * files)),-3 - (6*i), far);
+        objects[j].rotation.x = Math.PI / 2;
+      }
+    }
+  }
+}
+
+function removeFromCamera(object)
+{
+  camera.remove(object);
+}
 
 function animate()
 {
@@ -155,6 +223,7 @@ function animate()
 
       if(inRange(destX, objAM.position.x) && inRange(destY, objAM.position.y) && inRange(destZ, objAM.position.z))
       {
+        console.log("llego");
         movimiento = false;
         return;
       }
@@ -188,10 +257,28 @@ function animate()
     }
 }
 
+function changeCamera()
+{
+    if(turn)
+    {
+      translateObj(camera, new THREE.Vector3(170,110,220));
+      orbitControls.enableRotate = true;
+      turn = false;
+    }
+    else
+    {
+      translateObj(camera, new THREE.Vector3(10.3,164.8,0.05));
+      orbitControls.enableRotate = false;
+      turn = true;
+    }
+
+}
+
 function run()
 {
     requestAnimationFrame(function() { run(); });
 
+    //console.log(camera.position);
     // Render the scene
     renderer.render( scene, camera );
 
@@ -251,18 +338,18 @@ function createScene(canvas)
     // Create a new Three.js scene
     scene = new THREE.Scene();
 
-    new THREE.CubeTextureLoader().load(urls, function(reflectionCube)
+    /*new THREE.CubeTextureLoader().load(urls, function(reflectionCube)
     {
       reflectionCube.format = THREE.RGBFormat;
       scene.background = reflectionCube;
       renderer.render( scene, camera );
-    });
+    });*/
 
     loadTable();
 
     // Add  a camera so we can view the scene
     camera = new THREE.PerspectiveCamera( 45, canvas.width / canvas.height, 1, 4000 );
-    camera.position.set(-2, 6, 0);
+    camera.position.set(2, 50, 0);
     scene.add(camera);
 
     // Create a group to hold all the objects
@@ -272,7 +359,7 @@ function createScene(canvas)
     var directionalLight = new THREE.DirectionalLight( 0xffffff, 1);
 
     // Create and add all the lights
-    directionalLight.position.set(0, 100, 0);
+    directionalLight.position.set(-50, 30, 0);
     root.add(directionalLight);
 
     ambientLight = new THREE.AmbientLight ( 0xffffff );
