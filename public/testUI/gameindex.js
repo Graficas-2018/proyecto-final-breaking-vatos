@@ -54,14 +54,17 @@ function loadDominoTiles(i,j){
       materials.preload();
       objLoader.setMaterials(materials);
       objLoader.load(dominoTileOBJ, (object)=>{
-        if(object.children.isMesh){
-          object.children.position.set(0,0,0);
-          object.children.rotation = object.rotation;
+        if(object.children[0].isMesh){
+          object.children[0].position.set(0,0,0);
+          object.children[0].rotation.set(Math.PI/2,0,0);
+          object.children[0].scale.set(1,1,1);
         }
+        console.log(object.children[0].geometry.center());
         object.l1 = i;
         object.l2 = j;
-        fichas.push(object);
         object.position.set(getRandomInt(0, 10),getRandomInt(0, 10),getRandomInt(0, 50));
+        //object.rotation.set(Math.PI/2,0,0);
+        fichas.push(object);
       });
     });
     plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(500, 500, 8, 8), new THREE.MeshBasicMaterial({color: 0xffffff}));
@@ -157,6 +160,7 @@ var SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 2048;
 
 function createScene(canvas) {
   scene = new THREE.Scene();
+  raycaster = new THREE.Raycaster();
   for (var i = 0; i <= maxPuntos; i++) {
     var last = i;
     for(var j = 0; j<=maxPuntos;j++){
@@ -175,8 +179,8 @@ function createScene(canvas) {
     // Options are THREE.BasicShadowMap, THREE.PCFShadowMap, PCFSoftShadowMap
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    //cubemap
-		var path = "../images/cubemap/";
+    /*/cubemap
+		var path = "../images/cubemap/park/";
 		var format = '.png';
 
     var urls = [
@@ -185,18 +189,12 @@ function createScene(canvas) {
 			path + 'pz' + format, path + 'nz' + format
 		];
 
-		var reflectionCube = new THREE.CubeTextureLoader().load( urls );
-
-		reflectionCube.format = THREE.RGBFormat;
-
-		var refractionCube = new THREE.CubeTextureLoader().load( urls );
-
-    refractionCube.mapping = THREE.CubeRefractionMapping;
-
-    refractionCube.format = THREE.RGBFormat;
-    raycaster = new THREE.Raycaster();
-
-    scene.background = reflectionCube;
+    new THREE.CubeTextureLoader().load(urls, function(reflectionCube)
+    {
+      reflectionCube.format = THREE.RGBFormat;
+      scene.background = reflectionCube;
+      renderer.render( scene, camera );
+    });*/
 
     // Add  a camera so we can view the scene
     camera = new THREE.PerspectiveCamera( 45, canvas.width / canvas.height, 1, 4000 );
@@ -333,11 +331,11 @@ $(function () {
     while(j < 7){
       //if(j<7)
       //console.log(tiles[i].l1 + ", "+ tiles[i].l2);
-      console.log(tiles[j].l1 + ", "+ tiles[j].l2);
+    //  console.log(tiles[j].l1 + ", "+ tiles[j].l2);
       if (tiles[j].l1 == fichas[i].l1 && tiles[j].l2 == fichas[i].l2) {
         fichasJugador.push(fichas[i]);
-        console.log(toString(fichas[i].position));
-        console.log(toString(fichas[i].children[0].position));
+    //    console.log(toString(fichas[i].position));
+    //    console.log(toString(fichas[i].children[0].position));
         scene.add(fichas[i]);
         j++;
         i=0;
