@@ -10,7 +10,7 @@ selection = null,
 gameId = null,
 fichas = [],tiles=null,
 movimientoValido = false, primerMovimiento = true,turnoJugador = false,numberLeft = -1, numberRight = -1,fichasIniciales = 7,
-orbitControls = null, raycaster = null, dragControls = null, infoGame= null, lastTile=null;
+orbitControls = null, raycaster = null, dragControls = null, infoGame= null, lastTile=null, jugadorContinua = true;
 var mouse = new THREE.Vector2();
 var maxPuntos = 6;
 var objLoader = null, mtlLoader = null;
@@ -40,7 +40,8 @@ function initControls(){
         var l1 = event.object.parent.l1;
         var l2 = event.object.parent.l2;
         var parent = event.object;
-        selection = {l1: l1,l2:l2,id:parent};
+        console.log(parent.parent.idFicha);
+        selection = {l1: l1,l2:l2,id:parent,idF:parent.parent.idFicha};
         orbitControls.enabled = false;
       }
 		});
@@ -92,12 +93,14 @@ function completeTurn(){
     //Enviar movimiento
     if(movimientoValido){
       var tile = {};
+      tile.id = selection.idF;
       tile.l1 = selection.l1;
       tile.l2 = selection.l2;
       move.tile = tile;
       move.numberLeft = numberLeft;
       move.numberRight = numberRight;
       move.primerMovimiento = infoGame.primerMovimiento;
+      move.lastTile = selection.id;
       socket.emit('send move', move);
       turnoJugador = false;
       var index = fichasJugador.indexOf(selection.id);
@@ -118,25 +121,26 @@ function completeTurn(){
     }
   }
 }
-
-function loadDominoTiles(i,j){
+var k = 0;
+function loadDominoTiles(i,j,k){
     if(!objLoader){
       objLoader = new THREE.OBJLoader();
     }
     if(!mtlLoader){
       mtlLoader = new THREE.MTLLoader();
     }
-
     var dominoTileMTL = "../Models/"+i+"-"+j+".mtl";
     var dominoTileOBJ = "../Models/"+i+"-"+j+".obj";
     mtlLoader.load(dominoTileMTL, (materials)=>{
       materials.preload();
       objLoader.setMaterials(materials);
       objLoader.load(dominoTileOBJ, (object)=>{
+        object.idFicha = k;
         object.l1 = i;
         object.l2 = j;
         object.position.set(getRandomInt(0, 10),getRandomInt(0, 10),getRandomInt(0, 50));
         fichas.push(object);
+        console.log(i+" "+j+" "+k);
       });
     });
   }
@@ -160,6 +164,9 @@ function run() {
     animate();
     // Update the camera controller
     orbitControls.update();
+    /*if(!turnoJugador){
+
+    }*/
 }
 
 
@@ -178,7 +185,8 @@ function createScene(canvas) {
       if (i > 0 && last > j) {
         j = last;
       }
-      loadDominoTiles(i,j);
+      loadDominoTiles(i,j,k);
+      k++;
     }
   }
     // Create the Three.js renderer and attach it to our canvas
@@ -244,16 +252,32 @@ function darFichasJugador(number, eatTile){
 }
 
 function agregarFichaJuego(number,move,isForUser){
+  var j = 0, i =0;
   if(!turnoJugador){
     return;
+    /*while(j < 1){
+      if (move.tile.id == fichas[i].idFicha && (lastTile.idF != move.tile.id) || lastTile == null) {
+        scene.add(fichas[i]);
+        j++;
+        i=0;
+      }
+      else{
+        i++;
+      }
+    }*/
   }
   else{
-    var j = 0, i =0;
-    while(j < 1){
-      if (move.tile.l1 == fichas[i].l1 && move.tile.l2 == fichas[i].l2 && (lastTile.l1 != move.tile.l1 && lastTile.l2 != move.tile.l2) || lastTile == null) {
+    console.log("agregar ficha");
+    while(j < number){
+      var moSe =move.tile.id;
+      var fi = fichas[i].idFicha;
+      if (moSe === fi){// /*&& (lastTile.idF != move.tile.id)*/ || lastTile == null) {
         if(isForUser){
           fichasJugador.push(fichas[i].children[0]);
         }
+        console.log("Server "+move.tile.id);
+        console.log("Lol "+fichas[i].idFicha);
+        console.log(fichas[i]);
         scene.add(fichas[i]);
         j++;
         i=0;
@@ -353,8 +377,8 @@ $(function () {
     alert("Juego iniciado");
     console.log(t);
     tiles = t;
-    darFichasJugador(fichasIniciales);
     initControls();
+    darFichasJugador(fichasIniciales);
     run();
   });
   // When player joins room
@@ -371,6 +395,8 @@ $(function () {
       alert("Es tu turno");
       turnoJugador = true;
       infoGame = obj;
+      if(!obj.primerMovimiento)
+        agregarFichaJuego(1,obj,false);
     }
   });
 
@@ -380,19 +406,19 @@ $(function () {
     if (move.tile != null) {
       $('#messages').append($('<li>').text("El jugador "+ move.player +"  puso la ficha" + move.tile.l1 + ":" + move.tile.l2+". Los siguientes numeros validos son a la izquierda "+move.numberLeft+ " y a la derecha "+move.numberRight));
     }
-    agregarFichaJuego(1,move,false);
     //Actualizar movimientos
   });
 
   // Cuando un jugador envía un movimiento
   $('#moveButton').click(function(){
-    var move = {};
+    /*var move = {};
     move.gameId = gameId;
     var tile = {};
+
     tile.l1 = 0;
     tile.l2 = 1;
     move.tile = tile;
-    socket.emit('send move', move);
+    socket.emit('send move', move);*/
     // Si se trata de un "pase" envia null
     //move.tile = null;
     //socket.emit('send move', move);
@@ -408,6 +434,7 @@ $(function () {
     console.log(tilesS[0]);
     var fichaComida = {};
     var tile={};
+    tile.id = tilesS[0].id;
     tile.l1 = tilesS[0].l1;
     tile.l2 = tilesS[0].l2;
     fichaComida.tile= tile;
@@ -421,8 +448,9 @@ $(function () {
   });
 
   //When game over
-  socket.on('game over', (tile) => {
-    $('#messages').append($('<li>').text(" GAME OVER "));
+  socket.on('game over', (info) => {
+
+    $('#messages').append($('<li>').text(info.message));
   });
 
   // If any error happens

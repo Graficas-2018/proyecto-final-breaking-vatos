@@ -7,34 +7,34 @@ module.exports = class Game {
     // Array of players
     this.players = new HashMap();
     this.tiles = [];
-    this.tiles.push({l1: 0, l2: 0});
-    this.tiles.push({l1: 0, l2: 1});
-    this.tiles.push({l1: 0, l2: 2});
-    this.tiles.push({l1: 0, l2: 3});
-    this.tiles.push({l1: 0, l2: 4});
-    this.tiles.push({l1: 0, l2: 5});
-    this.tiles.push({l1: 0, l2: 6});
-    this.tiles.push({l1: 1, l2: 1});
-    this.tiles.push({l1: 1, l2: 2});
-    this.tiles.push({l1: 1, l2: 3});
-    this.tiles.push({l1: 1, l2: 4});
-    this.tiles.push({l1: 1, l2: 5});
-    this.tiles.push({l1: 1, l2: 6});
-    this.tiles.push({l1: 2, l2: 2});
-    this.tiles.push({l1: 2, l2: 3});
-    this.tiles.push({l1: 2, l2: 4});
-    this.tiles.push({l1: 2, l2: 5});
-    this.tiles.push({l1: 2, l2: 6});
-    this.tiles.push({l1: 3, l2: 3});
-    this.tiles.push({l1: 3, l2: 4});
-    this.tiles.push({l1: 3, l2: 5});
-    this.tiles.push({l1: 3, l2: 6});
-    this.tiles.push({l1: 4, l2: 4});
-    this.tiles.push({l1: 4, l2: 5});
-    this.tiles.push({l1: 4, l2: 6});
-    this.tiles.push({l1: 5, l2: 5});
-    this.tiles.push({l1: 5, l2: 6});
-    this.tiles.push({l1: 6, l2: 6});
+    this.tiles.push({id:0,l1: 0, l2: 0});
+    this.tiles.push({id:1,l1: 0, l2: 1});
+    this.tiles.push({id:2,l1: 0, l2: 2});
+    this.tiles.push({id:3,l1: 0, l2: 3});
+    this.tiles.push({id:4,l1: 0, l2: 4});
+    this.tiles.push({id:5,l1: 0, l2: 5});
+    this.tiles.push({id:6,l1: 0, l2: 6});
+    this.tiles.push({id:7,l1: 1, l2: 1});
+    this.tiles.push({id:8,l1: 1, l2: 2});
+    this.tiles.push({id:9,l1: 1, l2: 3});
+    this.tiles.push({id:10,l1: 1, l2: 4});
+    this.tiles.push({id:11,l1: 1, l2: 5});
+    this.tiles.push({id:12,l1: 1, l2: 6});
+    this.tiles.push({id:13,l1: 2, l2: 2});
+    this.tiles.push({id:14,l1: 2, l2: 3});
+    this.tiles.push({id:15,l1: 2, l2: 4});
+    this.tiles.push({id:16,l1: 2, l2: 5});
+    this.tiles.push({id:17,l1: 2, l2: 6});
+    this.tiles.push({id:18,l1: 3, l2: 3});
+    this.tiles.push({id:19,l1: 3, l2: 4});
+    this.tiles.push({id:20,l1: 3, l2: 5});
+    this.tiles.push({id:21,l1: 3, l2: 6});
+    this.tiles.push({id:22,l1: 4, l2: 4});
+    this.tiles.push({id:23,l1: 4, l2: 5});
+    this.tiles.push({id:24,l1: 4, l2: 6});
+    this.tiles.push({id:25,l1: 5, l2: 5});
+    this.tiles.push({id:26,l1: 5, l2: 6});
+    this.tiles.push({id:27,l1: 6, l2: 6});
     this.turn = -1;
     this.primerMovimiento = true;
     this.numberLeft=0;
@@ -70,8 +70,8 @@ module.exports = class Game {
     }
   }
 
-  addPlayer(socketId, name){
-    var player = new Player(socketId, name);
+  addPlayer(socketId, name,continuar){
+    var player = new Player(socketId, name, continuar);
     if (this.players.size < 4) {
       this.players.set(socketId, player);
       return true;

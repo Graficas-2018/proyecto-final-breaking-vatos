@@ -5,6 +5,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var game = require('./game.js');
 var HashMap = require('hashmap');
+var jugadorContinua = true;
 // Use compression
 app.use(compression());
 // Serve static assets
@@ -35,7 +36,7 @@ io.on('connection', function(socket){
     games.set(socket.id , new game());
     // Add player
     console.log(obj);
-    games.get(socket.id).addPlayer(socket.id, obj.name);
+    games.get(socket.id).addPlayer(socket.id, obj.name, jugadorContinua);
     //Emit waiting for players
     socket.emit('game created', true);
     socket.emit('waiting players', games.get(socket.id).players.values());
@@ -46,7 +47,7 @@ io.on('connection', function(socket){
     // Verify game exists
     if (games.has(obj.hostId)) {
       //Try to add player
-      if(!games.get(obj.hostId).addPlayer(socket.id, obj.name)){
+      if(!games.get(obj.hostId).addPlayer(socket.id, obj.name,jugadorContinua)){
         socket.emit('issue', 'No se pudo agregar al jugador');
         return;
       }
@@ -82,10 +83,21 @@ io.on('connection', function(socket){
       if(move.primerMovimiento == true){
         move.primerMovimiento = false;
       }
-      // Notificar movimiento y a quien le va
-      io.to(move.gameId).emit('new move', {player: socket.id, tile: move.tile, numberLeft: move.numberLeft, numberRight: move.numberRight});
-      io.to(move.gameId).emit('next turn', {player: games.get(move.gameId).nextTurn(), numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
-      //socket.broadcast.to(games.get(move.gameId).nextTurn()).emit('next turn', null);
+      var actualPlayer = games.get(move.gameId).players.get(socket.id);
+      actualPlayer.tileDelivered(move);
+      var numTiles = actualPlayer.getTiles();
+      console.log(numTiles);
+      if(numTiles.length <= 0){
+        var message ={message: "Ganador: "+actualPlayer.name};
+        io.to(move.gameId).emit('game over',message);
+        return;
+      }
+      else{
+        // Notificar movimiento y a quien le va
+        io.to(move.gameId).emit('new move', {player: socket.id, tile: move.tile, numberLeft: move.numberLeft, numberRight: move.numberRight});
+        io.to(move.gameId).emit('next turn', {player: games.get(move.gameId).nextTurn(), tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
+        //socket.broadcast.to(games.get(move.gameId).nextTurn()).emit('next turn', null);
+      }
     }
     //console.log("Jugador " + socket.id + " movio ficha: " + move.l1 + ":" + move.l2);
   });
