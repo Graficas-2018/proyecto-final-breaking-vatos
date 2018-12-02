@@ -80,8 +80,8 @@ io.on('connection', function(socket){
   socket.on('send move', function(move){
     if (move != null) {
       // Notificar movimiento y a quien le va
-      io.to(move.gameId).emit('new move', {player: socket.id, tile: move.tile});
-      io.to(move.gameId).emit('next turn', {player: games.get(move.gameId).nextTurn()});
+      io.to(move.gameId).emit('new move', {player: socket.id, tile: move.tile, numberLeft: move.numberLeft, numberRight: move.numberRight});
+      io.to(move.gameId).emit('next turn', {player: games.get(move.gameId).nextTurn(), numberLeft:move.numberLeft, numberRight:move.numberRight});
       //socket.broadcast.to(games.get(move.gameId).nextTurn()).emit('next turn', null);
     }
     //console.log("Jugador " + socket.id + " movio ficha: " + move.l1 + ":" + move.l2);

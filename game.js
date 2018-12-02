@@ -36,6 +36,8 @@ module.exports = class Game {
     this.tiles.push({l1: 5, l2: 6});
     this.tiles.push({l1: 6, l2: 6});
     this.turn = -1;
+    this.numberLeft=0;
+    this.numberRight = 0;
   }
 
   startGame(){
@@ -83,6 +85,18 @@ module.exports = class Game {
     } else {
       return false;
     }
+  }
+
+  setLastNumbers(move){
+    if(move.numberLeft)
+      this.numberLeft = move.numberLeft;
+    if(move.numberRight)
+      this.numberRight = move.numberRight;
+  }
+
+  getLastNumbers(){
+    var numbers = {numberLeft: this.numberLeft, numberRight: this.numberRight};
+    return numbers;
   }
 
   nextTurn() {

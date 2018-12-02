@@ -5,10 +5,12 @@ root = null,
 gun = null,
 monster = null,
 group = null,
-selection = null,plane= null, offset = new THREE.Vector3,
+socket = null,
+selection = null,
+gameId = null,
 fichas = [],
-movimientoValido = false, primerMovimiento = true,turnoJugador = false,
-orbitControls = null, raycaster = null, dragControls = null;
+movimientoValido = false, primerMovimiento = true,turnoJugador = false,numberLeft = -1, numberRight = -1,
+orbitControls = null, raycaster = null, dragControls = null, infoGame= null;
 var mouse = new THREE.Vector2();
 var maxPuntos = 6;
 var objLoader = null, mtlLoader = null;
@@ -30,15 +32,79 @@ function initControls(){
     orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
     dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement );
 		dragControls.addEventListener( 'dragstart', function (event) {
-      console.log(event.object.parent);
-      selection = {event.object.parent.l1,event.object.parent.l2}
-			orbitControls.enabled = false;
+      if(!turnoJugador){
+        return;
+      }
+      else{
+        var l1 = event.object.parent.l1;
+        var l2 = event.object.parent.l2;
+        selection = {l1: l1,l2:l2,id:event.object.uuid};
+        orbitControls.enabled = false;
+      }
 		});
 		dragControls.addEventListener( 'dragend', function (event) {
-      //selection = {event.object.parent.l1,event.object.parent.l2}
+      if(!turnoJugador){
+        return;
+      }
+      console.log(selection);
 			orbitControls.enabled = true;
-
+      completeTurn();
 		});
+}
+
+function completeTurn(){
+  // Habilitar mover ficha
+  var move = {};
+  if (turnoJugador && selection) {
+    move.gameId = gameId;
+    if (primerMovimiento) {
+        numberLeft = selection.l1;
+        numberRight = selection.l2;
+        movimientoValido = true;
+        primerMovimiento = false;
+    }
+    else{
+      if(infoGame.numberLeft == selection.l1){
+        numberLeft = selection.l2;
+        movimientoValido = true;
+      }
+      else if(infoGame.numberLeft == selection.l2){
+        numberLeft = selection.l1;
+        movimientoValido = true;
+      }
+      else if(infoGame.numberRight == selection.l1){
+        numberRight = selection.l2;
+        movimientoValido = true;
+      }
+      else if(infoGame.numberRight == selection.l2){
+        numberLeft = selection.l1;
+        movimientoValido = true;
+      }
+      else{
+        movimientoValido = false;
+      }
+    }
+    //Enviar movimiento
+    if(movimientoValido){
+      var tile = {};
+      tile.l1 = selection.l1;
+      tile.l2 = selection.l2;
+      move.tile = tile;
+      move.numberLeft = numberLeft;
+      move.numberRight = numberRight;
+      socket.emit('send move', move);
+      turnoJugador = false;
+      var index = fichasJugador.indexOf(selection.id);
+      if (index > -1) {
+        fichasJugador.splice(index, 1);
+      }
+      selection = null;
+    }
+    else{
+      selection = null;
+      return;
+    }
+  }
 }
 
 function loadDominoTiles(i,j){
@@ -149,8 +215,8 @@ function createScene(canvas) {
 }
 
 $(function () {
-  var socket = io();
-  var name, gameId, tiles;
+  socket = io();
+  var name, tiles;
   var canvas = document.getElementById("webglcanvas");
   canvas.style.display = "none";
   canvas.width = window.innerWidth;
@@ -261,29 +327,12 @@ $(function () {
 
   // When next turn of game
   socket.on('next turn', (obj) => {
+
     console.log("NUEVO TURNO");
     if (obj.player == socket.id) {
       alert("Es tu turno");
       turnoJugador = true;
-      // Habilitar mover ficha
-      if (turnoJugador) {
-
-        // Verificar movimiento
-
-        // Quitar ficha del jugador
-        // tiles.splice(0,1);
-
-        //Enviar movimiento
-        if(movimientoValido){
-          var move = {};
-          move.gameId = gameId;
-          move.tile = selection;
-          socket.emit('send move', move);
-          turnoJugador = false;
-          
-          selection = {};
-        }
-      }
+      infoGame = obj;
     }
   });
 
@@ -291,7 +340,7 @@ $(function () {
   socket.on('new move', (move) => {
     console.log(move);
     if (move.tile != null) {
-      $('#messages').append($('<li>').text("El jugador "+ move.player +"  puso la ficha" + move.tile.l1 + ":" + move.tile.l2));
+      $('#messages').append($('<li>').text("El jugador "+ move.player +"  puso la ficha" + move.tile.l1 + ":" + move.tile.l2+". Los siguientes numeros validos son a la izquierda "+move.numberLeft+ " y a la derecha "+move.numberRight));
     }
     //Actualizar movimientos
   });
