@@ -10,9 +10,9 @@ app.use(compression());
 // Serve static assets
 app.use('/game', express.static('public'));
 // HTML only to test socket
-//app.get('/', function(req, res){
-  //res.sendFile(__dirname + '/index.html');
-//});
+// app.get('/', function(req, res){
+//   res.sendFile(__dirname + '/index.html');
+// });
 
 // For every socket host new game
 io.use(function(socket, next) {

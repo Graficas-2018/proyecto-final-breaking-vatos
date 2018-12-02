@@ -3,6 +3,14 @@
 <head>
   <title>Dominó online</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+  <script src="../libs/jquery-3.3.1/jquery-3.3.1.js"></script>
+
+  <script src="../libs/three.js/three.js"></script>
+  <script src="../libs/three.js/controls/OrbitControls.js"></script>
+  <script src="../libs/three.js/controls/DragControls.js"></script>
+  <script src="../libs/three.js/loaders/inflate.min.js"></script>
+  <script src="../libs/three.js/loaders/OBJLoader.js"></script>
+  <script src="../libs/three.js/loaders/MTLLoader.js"></script>
 </head>
 <body>
   <h1>Dominó online</h1>
@@ -52,6 +60,10 @@
         </div>
       </div>
     </div>
+  </div>
+  <div id="container">
+    <canvas id="webglcanvas"></canvas>
+  	<div id="title">Three.js Domino Online</div>
   </div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
