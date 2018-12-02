@@ -8,15 +8,16 @@ group = null,
 socket = null,
 selection = null,
 gameId = null,
-fichas = [],
-movimientoValido = false, primerMovimiento = true,turnoJugador = false,numberLeft = -1, numberRight = -1,
-orbitControls = null, raycaster = null, dragControls = null, infoGame= null;
+fichas = [],tiles=null,
+movimientoValido = false, primerMovimiento = true,turnoJugador = false,numberLeft = -1, numberRight = -1,fichasIniciales = 7,
+orbitControls = null, raycaster = null, dragControls = null, infoGame= null, lastTile=null;
 var mouse = new THREE.Vector2();
 var maxPuntos = 6;
 var objLoader = null, mtlLoader = null;
 var fichasJugador= [];
 var duration = 20000; // ms
 var currentTime = Date.now();
+
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
@@ -38,7 +39,8 @@ function initControls(){
       else{
         var l1 = event.object.parent.l1;
         var l2 = event.object.parent.l2;
-        selection = {l1: l1,l2:l2,id:event.object.uuid};
+        var parent = event.object;
+        selection = {l1: l1,l2:l2,id:parent};
         orbitControls.enabled = false;
       }
 		});
@@ -57,27 +59,30 @@ function completeTurn(){
   var move = {};
   if (turnoJugador && selection) {
     move.gameId = gameId;
-    if (primerMovimiento) {
+    if (infoGame.primerMovimiento) {
         numberLeft = selection.l1;
         numberRight = selection.l2;
         movimientoValido = true;
-        primerMovimiento = false;
     }
     else{
       if(infoGame.numberLeft == selection.l1){
         numberLeft = selection.l2;
+        numberRight = infoGame.numberRight;
         movimientoValido = true;
       }
       else if(infoGame.numberLeft == selection.l2){
         numberLeft = selection.l1;
+        numberRight = infoGame.numberRight;
         movimientoValido = true;
       }
       else if(infoGame.numberRight == selection.l1){
         numberRight = selection.l2;
+        numberLeft = infoGame.numberLeft;
         movimientoValido = true;
       }
       else if(infoGame.numberRight == selection.l2){
-        numberLeft = selection.l1;
+        numberRight = selection.l1;
+        numberLeft = infoGame.numberLeft;
         movimientoValido = true;
       }
       else{
@@ -92,15 +97,22 @@ function completeTurn(){
       move.tile = tile;
       move.numberLeft = numberLeft;
       move.numberRight = numberRight;
+      move.primerMovimiento = infoGame.primerMovimiento;
       socket.emit('send move', move);
       turnoJugador = false;
       var index = fichasJugador.indexOf(selection.id);
+      lastTile = fichasJugador[index];
       if (index > -1) {
         fichasJugador.splice(index, 1);
       }
+      console.log(fichasJugador.length);
+      dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement );
+
       selection = null;
+      movimientoValido = false;
     }
     else{
+      movimientoValido = false
       selection = null;
       return;
     }
@@ -133,11 +145,11 @@ function loadDominoTiles(i,j){
   }
 
 function animate() {
-    var now = Date.now();
+    /*var now = Date.now();
     var deltat = now - currentTime;
     currentTime = now;
     var fract = deltat / duration;
-    var angle = Math.PI * 2 * fract;
+    var angle = Math.PI * 2 * fract;*/
 }
 
 function run() {
@@ -214,9 +226,48 @@ function createScene(canvas) {
     window.addEventListener( 'resize', onWindowResize);
 }
 
+
+function darFichasJugador(number, eatTile){
+  var j = 0;
+  var i = 0;
+  while(j < number){
+    if (tiles[j].l1 == fichas[i].l1 && tiles[j].l2 == fichas[i].l2) {
+      fichasJugador.push(fichas[i].children[0]);
+      scene.add(fichas[i]);
+      j++;
+      i=0;
+    }
+    else{
+      i++;
+    }
+  }
+}
+
+function agregarFichaJuego(number,move,isForUser){
+  if(!turnoJugador){
+    return;
+  }
+  else{
+    var j = 0, i =0;
+    while(j < 1){
+      if (move.tile.l1 == fichas[i].l1 && move.tile.l2 == fichas[i].l2 && (lastTile.l1 != move.tile.l1 && lastTile.l2 != move.tile.l2) || lastTile == null) {
+        if(isForUser){
+          fichasJugador.push(fichas[i].children[0]);
+        }
+        scene.add(fichas[i]);
+        j++;
+        i=0;
+      }
+      else{
+        i++;
+      }
+    }
+  }
+}
+
 $(function () {
   socket = io();
-  var name, tiles;
+  var name;
   var canvas = document.getElementById("webglcanvas");
   canvas.style.display = "none";
   canvas.width = window.innerWidth;
@@ -302,20 +353,7 @@ $(function () {
     alert("Juego iniciado");
     console.log(t);
     tiles = t;
-    var j = 0;
-    var i = 0;
-    while(j < 7){
-      if (tiles[j].l1 == fichas[i].l1 && tiles[j].l2 == fichas[i].l2) {
-        fichasJugador.push(fichas[i].children[0]);
-        scene.add(fichas[i]);
-        j++;
-        i=0;
-      }
-      else
-        i++;
-    }
-    for(var i = 0; i < fichasJugador.length; i++)
-      console.log(fichasJugador[i]);
+    darFichasJugador(fichasIniciales);
     initControls();
     run();
   });
@@ -342,6 +380,7 @@ $(function () {
     if (move.tile != null) {
       $('#messages').append($('<li>').text("El jugador "+ move.player +"  puso la ficha" + move.tile.l1 + ":" + move.tile.l2+". Los siguientes numeros validos son a la izquierda "+move.numberLeft+ " y a la derecha "+move.numberRight));
     }
+    agregarFichaJuego(1,move,false);
     //Actualizar movimientos
   });
 
@@ -365,8 +404,14 @@ $(function () {
   });
 
   //When tile is received
-  socket.on('new tile', (tile) => {
-    console.log(tile);
+  socket.on('new tile', (tilesS) => {
+    console.log(tilesS[0]);
+    var fichaComida = {};
+    var tile={};
+    tile.l1 = tilesS[0].l1;
+    tile.l2 = tilesS[0].l2;
+    fichaComida.tile= tile;
+    agregarFichaJuego(1,fichaComida,true);
     $('#messages').append($('<li>').text(tile));
   });
 

@@ -36,6 +36,7 @@ module.exports = class Game {
     this.tiles.push({l1: 5, l2: 6});
     this.tiles.push({l1: 6, l2: 6});
     this.turn = -1;
+    this.primerMovimiento = true;
     this.numberLeft=0;
     this.numberRight = 0;
   }
@@ -97,6 +98,9 @@ module.exports = class Game {
   getLastNumbers(){
     var numbers = {numberLeft: this.numberLeft, numberRight: this.numberRight};
     return numbers;
+  }
+  getFirstMove(){
+    return this.primerMovimiento;
   }
 
   nextTurn() {

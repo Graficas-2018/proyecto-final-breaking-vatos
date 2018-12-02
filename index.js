@@ -73,15 +73,18 @@ io.on('connection', function(socket){
       io.sockets.connected[player.socketId].emit('game started', player.tiles);
     }
     // Send nextTurn to the host
-    io.to(socket.id).emit('next turn', {player: games.get(socket.id).nextTurn()});
+    io.to(socket.id).emit('next turn', {player: games.get(socket.id).nextTurn(),primerMovimiento:games.get(socket.id).getFirstMove()});
   });
 
   //Siguiente movimiento
   socket.on('send move', function(move){
     if (move != null) {
+      if(move.primerMovimiento == true){
+        move.primerMovimiento = false;
+      }
       // Notificar movimiento y a quien le va
       io.to(move.gameId).emit('new move', {player: socket.id, tile: move.tile, numberLeft: move.numberLeft, numberRight: move.numberRight});
-      io.to(move.gameId).emit('next turn', {player: games.get(move.gameId).nextTurn(), numberLeft:move.numberLeft, numberRight:move.numberRight});
+      io.to(move.gameId).emit('next turn', {player: games.get(move.gameId).nextTurn(), numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
       //socket.broadcast.to(games.get(move.gameId).nextTurn()).emit('next turn', null);
     }
     //console.log("Jugador " + socket.id + " movio ficha: " + move.l1 + ":" + move.l2);
