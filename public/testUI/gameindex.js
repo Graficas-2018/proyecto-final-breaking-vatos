@@ -11,9 +11,8 @@ gameId = null,
 fichas = [],tiles=null,
 movimientoValido = false, primerMovimiento = true,turnoJugador = false,numberLeft = -1, numberRight = -1,fichasIniciales = 7,
 orbitControls = null, raycaster = null, dragControls = null, infoGame= null, lastTile=null, jugadorContinua = true, loaded=false,
-destX = 0,
-destY = 0,
-destZ = 0;
+destX = 0, destY = 0, destZ = 0,
+der1 = false, der2 = false, izq1 = false, izq2 = false;
 var mouse = new THREE.Vector2();
 var maxPuntos = 6;
 var objLoader = null, mtlLoader = null;
@@ -24,6 +23,9 @@ var fichasJugador= [];
 var duration = 20000; // ms
 var currentTime = Date.now();
 var activated = false;
+var posDer = new THREE.Vector3(0,-168.5,-4);
+var posIzq = new THREE.Vector3(0,-168.5,0);
+
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
@@ -68,30 +70,39 @@ function completeTurn(){
         numberLeft = selection.l1;
         numberRight = selection.l2;
         movimientoValido = true;
+        der1 = true;
     }
     else{
       if(infoGame.numberLeft == selection.l1){
         numberLeft = selection.l2;
         numberRight = infoGame.numberRight;
         movimientoValido = true;
+        der2 = true;
       }
       else if(infoGame.numberLeft == selection.l2){
         numberLeft = selection.l1;
         numberRight = infoGame.numberRight;
         movimientoValido = true;
+        der1 = true;
       }
       else if(infoGame.numberRight == selection.l1){
         numberRight = selection.l2;
         numberLeft = infoGame.numberLeft;
         movimientoValido = true;
+        izq2 = true;
       }
       else if(infoGame.numberRight == selection.l2){
         numberRight = selection.l1;
         numberLeft = infoGame.numberLeft;
         movimientoValido = true;
+        izq1 = true;
       }
       else{
         movimientoValido = false;
+        der1 = false;
+        der2 = false;
+        izq1 = false;
+        izq2 = false;
       }
     }
     //Enviar movimiento
@@ -107,15 +118,66 @@ function completeTurn(){
       move.lastTile = selection.id;
       var index = fichasJugador.indexOf(selection.id);
       lastTile = fichasJugador[index];
-      if (index > -1) {
-        fichasJugador.splice(index, 1);
+
+      if(der1)
+      {
+        fichasJugador[index].rotation.y -= (Math.PI / 2);
+        translateObj(fichasJugador[index], posDer);
+        setTimeout(function()
+        {
+          posDer = new THREE.Vector3(0,posDer.y,(posDer.z - 4));
+        }, 2000);
+        move.dir = 2;
       }
-      dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement);
+      else if(der2)
+      {
+        fichasJugador[index].rotation.y += (Math.PI / 2);
+        translateObj(fichasJugador[index], posDer);
+        setTimeout(function()
+        {
+          posDer = new THREE.Vector3(0,posDer.y,(posDer.z - 4));
+        }, 2000);
+        move.dir = 3;
+      }
+      else if(izq1)
+      {
+        fichasJugador[index].rotation.y += (Math.PI / 2);
+        translateObj(fichasJugador[index], posIzq);
+        setTimeout(function()
+        {
+          posIzq = new THREE.Vector3(0,posIzq.y,(posIzq.z + 4));
+        }, 2000);
+        move.dir = 0;
+      }
+      else if(izq2)
+      {
+        fichasJugador[index].rotation.y -= (Math.PI / 2);
+        translateObj(fichasJugador[index], posIzq);
+        setTimeout(function()
+        {
+          posIzq = new THREE.Vector3(0,posIzq.y,(posIzq.z + 4));
+        }, 2000);
+        move.dir = 1;
+      }
+      der1 = false;
+      der2 = false;
+      izq1 = false;
+      izq2 = false;
+
+      socket.emit('send move', move);
+      turnoJugador = false;
+      setTimeout(function()
+      {
+        if (index > -1) {
+          changeCamera();
+          fichasJugador.splice(index, 1);
+          hideDominoes(fichasJugador);
+        }
+      }, 2000);
+      dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement );
       selection = null;
       movimientoValido = false;
       activated = false;
-      turnoJugador = false;
-      socket.emit('send move', move);
     }
     else{
       movimientoValido = false
@@ -124,6 +186,7 @@ function completeTurn(){
     }
   }
 }
+
 var k = 0;
 function loadDominoTiles(i,j,k){
     if(!objLoader){
@@ -141,7 +204,8 @@ function loadDominoTiles(i,j,k){
         object.idFicha = k;
         object.l1 = i;
         object.l2 = j;
-        object.position.set(getRandomInt(0, 10),getRandomInt(0, 10),getRandomInt(0, 50));
+        //object.position.set(getRandomInt(0, 10),getRandomInt(0, 10),getRandomInt(0, 50));
+        object.position.set(10.3,164.8,0.05);
         fichas.push(object);
       });
     });
@@ -158,28 +222,28 @@ function hideDominoes(objects)
     {
         if ( child instanceof THREE.Mesh )
         {
-            if(child.visible)
-            {
-              child.visible = false;
-            }
-            else
-            {
-              child.visible = true;
-            }
+            child.visible = false;
         }
     });
   }
 }
 
-function putDominoesOnCamera(objects) //Es necesario remover las fichas como hijos de la cámara para ponerlas despues
+function showDominoes(objects)
 {
-  //Remueve las fichas como hijas de la cámara para volver a ser acomodadas
-  for (var i = camera.children.length - 1; i >= 0; i--)
+  for (var i = 0; i < objects.length; i++)
   {
-      camera.remove(camera.children[i]);
+    objects[i].traverse( function ( child )
+    {
+        if ( child instanceof THREE.Mesh )
+        {
+            child.visible = true;
+        }
+    });
   }
+}
 
-
+function putDominoesOnCamera(objects)
+{
   var files = 0;
   if(objects.length <= 7)
     files = 1;
@@ -190,11 +254,6 @@ function putDominoesOnCamera(objects) //Es necesario remover las fichas como hij
   else
     files = 4;
 
-  //1 fila es 22 en x y 12 en y         3
-  //2 filas es 44 en x y 24 en y        3 y 9
-  //3 filas es 66 en x y 36 en y        3 y 9 y 15
-  //4 filas es 88 en x y 48 en y        3 y 9 y 15 y 21
-
   var far = files * -15;
 
   for (var i = 0; i < files; i++)
@@ -203,17 +262,11 @@ function putDominoesOnCamera(objects) //Es necesario remover las fichas como hij
     {
       if(j < objects.length)
       {
-        camera.add(objects[j]);
-        objects[j].position.set((7.25 * files) - ((j - (i*7)) * (2.5 * files)),-3 - (6*i), far);
-        objects[j].rotation.x = Math.PI / 2;
+        objects[j].position.set(3 + (6*i), far, (7.25 * files) - ((j - (i*7)) * (2.5 * files)));
+        objects[j].rotation.y = Math.PI / 2;
       }
     }
   }
-}
-
-function removeFromCamera(object)
-{
-  camera.remove(object);
 }
 
 function loadTable()
@@ -278,6 +331,7 @@ function changeCamera()
     if(turn)
     {
       translateObj(camera, new THREE.Vector3(170,110,220));
+      orbitControls.enableZoom = true;
       orbitControls.enableRotate = true;
       turn = false;
     }
@@ -285,6 +339,7 @@ function changeCamera()
     {
       translateObj(camera, new THREE.Vector3(10.3,164.8,0.05));
       orbitControls.enableRotate = false;
+      orbitControls.enableZoom = false;
       turn = true;
     }
 }
@@ -320,29 +375,29 @@ function animate()
 
       if(destX > objAM.position.x)
       {
-          objAM.position.x += 0.05 * deltat;
+          objAM.position.x += 0.1 * deltat;
       }
       else if(destX < objAM.position.x)
       {
-          objAM.position.x -= 0.05 * deltat;
+          objAM.position.x -= 0.1 * deltat;
       }
 
       if(destY > objAM.position.y)
       {
-          objAM.position.y += 0.05 * deltat;
+          objAM.position.y += 0.1 * deltat;
       }
       else if(destY < objAM.position.y)
       {
-          objAM.position.y -= 0.05 * deltat;
+          objAM.position.y -= 0.1 * deltat;
       }
 
       if(destZ > objAM.position.z)
       {
-          objAM.position.z += 0.05 * deltat;
+          objAM.position.z += 0.1 * deltat;
       }
       else if(destZ < objAM.position.z)
       {
-          objAM.position.z -= 0.05 * deltat;
+          objAM.position.z -= 0.1 * deltat;
       }
     }
 }
@@ -462,10 +517,38 @@ function agregarFichaJuego(number,move,isForUser){
       var moSe =move.tile.id;
       var fi = fichas[i].idFicha;
       if (moSe === fi){
+        scene.add(fichas[i]);
         if(isForUser){
           fichasJugador.push(fichas[i].children[0]);
         }
-        scene.add(fichas[i]);
+
+        if(move.dir == 0)
+        {
+          fichas[i].children[0].rotation.y += Math.PI;
+          fichas[i].children[0].position.set(posIzq.x,posIzq.y,posIzq.z);
+          posIzq = new THREE.Vector3(0,posIzq.y,(posIzq.z + 4));
+        }
+        else if(move.dir == 1)
+        {
+          fichas[i].children[0].position.set(posIzq.x,posIzq.y,posIzq.z);
+          posIzq = new THREE.Vector3(0,posIzq.y,(posIzq.z + 4));
+        }
+        else if(move.dir == 2)
+        {
+          fichas[i].children[0].position.set(posDer.x,posDer.y,posDer.z);
+          posDer = new THREE.Vector3(0,posDer.y,(posDer.z - 4));
+        }
+        else if(move.dir == 3)
+        {
+          fichas[i].children[0].rotation.y += Math.PI;
+          fichas[i].children[0].position.set(posDer.x,posDer.y,posDer.z);
+          posDer = new THREE.Vector3(0,posDer.y,(posDer.z - 4));
+        }
+        else if(move.dir == -1)
+        {
+          putDominoesOnCamera(fichasJugador);
+        }
+
         j++;
         i=0;
       }
@@ -567,6 +650,7 @@ $(function () {
     tiles = t;
     initControls();
     darFichasJugador(fichasIniciales);
+    putDominoesOnCamera(fichasJugador);
     run();
   });
   // When player joins room
@@ -579,14 +663,25 @@ $(function () {
   socket.on('next turn', (obj) => {
 
     console.log("NUEVO TURNO");
+
     if (obj.player == socket.id) {
       dragControls.activate();
-      alert("Es tu turno");
+      putDominoesOnCamera(fichasJugador);
+      showDominoes(fichasJugador);
       turnoJugador = true;
       infoGame = obj;
+      if(!obj.primerMovimiento)
+      {
+        agregarFichaJuego(1,obj,false);
+      }
+      setTimeout(function()
+      {
+        changeCamera();
+      }, 2000);
+
+      alert("Es tu turno");
+
       dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement );
-      /*if(!obj.primerMovimiento)
-        agregarFichaJuego(1,obj,false);*/
     }
   });
 
@@ -615,6 +710,7 @@ $(function () {
       tile.l1 = tilesS[0].l1;
       tile.l2 = tilesS[0].l2;
       fichaComida.tile= tile;
+      fichaComida.dir = -1;
       agregarFichaJuego(1,fichaComida,true);
       $('#messages').append($('<li>').text(JSON.stringify(tile)));
     }
