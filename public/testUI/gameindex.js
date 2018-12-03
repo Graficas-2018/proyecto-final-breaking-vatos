@@ -10,14 +10,11 @@ selection = null,
 gameId = null,
 fichas = [],tiles=null,
 movimientoValido = false, primerMovimiento = true,turnoJugador = false,numberLeft = -1, numberRight = -1,fichasIniciales = 7,
-<<<<<<< HEAD
-orbitControls = null, raycaster = null, dragControls = null, infoGame= null, lastTile=null, jugadorContinua = true;
-=======
-orbitControls = null, raycaster = null, dragControls = null, infoGame= null, lastTile=null,
+
+orbitControls = null, raycaster = null, dragControls = null, infoGame= null, lastTile=null, jugadorContinua = true,
 destX = 0,
 destY = 0,
 destZ = 0;
->>>>>>> 952f1961b5e55e4131c2b32e33463351671391f3
 var mouse = new THREE.Vector2();
 var maxPuntos = 6;
 var objLoader = null, mtlLoader = null;
@@ -51,7 +48,6 @@ function initControls(){
         var l1 = event.object.parent.l1;
         var l2 = event.object.parent.l2;
         var parent = event.object;
-        console.log(parent.parent.idFicha);
         selection = {l1: l1,l2:l2,id:parent,idF:parent.parent.idFicha};
         orbitControls.enabled = false;
       }
@@ -60,7 +56,6 @@ function initControls(){
       if(!turnoJugador){
         return;
       }
-      console.log(selection);
 			orbitControls.enabled = true;
       completeTurn();
 		});
@@ -119,9 +114,7 @@ function completeTurn(){
       if (index > -1) {
         fichasJugador.splice(index, 1);
       }
-      console.log(fichasJugador.length);
-      dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement );
-
+      dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement);
       selection = null;
       movimientoValido = false;
     }
@@ -151,7 +144,6 @@ function loadDominoTiles(i,j,k){
         object.l2 = j;
         object.position.set(getRandomInt(0, 10),getRandomInt(0, 10),getRandomInt(0, 50));
         fichas.push(object);
-        console.log(i+" "+j+" "+k);
       });
     });
   }
@@ -284,9 +276,9 @@ function run() {
     animate();
     // Update the camera controller
     orbitControls.update();
-    /*if(!turnoJugador){
-
-    }*/
+    if(!infoGame.continuar){
+      //socket
+    }
 }
 
 
@@ -384,29 +376,15 @@ function agregarFichaJuego(number,move,isForUser){
   var j = 0, i =0;
   if(!turnoJugador){
     return;
-    /*while(j < 1){
-      if (move.tile.id == fichas[i].idFicha && (lastTile.idF != move.tile.id) || lastTile == null) {
-        scene.add(fichas[i]);
-        j++;
-        i=0;
-      }
-      else{
-        i++;
-      }
-    }*/
   }
   else{
-    console.log("agregar ficha");
     while(j < number){
       var moSe =move.tile.id;
       var fi = fichas[i].idFicha;
-      if (moSe === fi){// /*&& (lastTile.idF != move.tile.id)*/ || lastTile == null) {
+      if (moSe === fi){
         if(isForUser){
           fichasJugador.push(fichas[i].children[0]);
         }
-        console.log("Server "+move.tile.id);
-        console.log("Lol "+fichas[i].idFicha);
-        console.log(fichas[i]);
         scene.add(fichas[i]);
         j++;
         i=0;
@@ -537,22 +515,6 @@ $(function () {
     }
     //Actualizar movimientos
   });
-
-  // Cuando un jugador envía un movimiento
-  $('#moveButton').click(function(){
-    /*var move = {};
-    move.gameId = gameId;
-    var tile = {};
-
-    tile.l1 = 0;
-    tile.l2 = 1;
-    move.tile = tile;
-    socket.emit('send move', move);*/
-    // Si se trata de un "pase" envia null
-    //move.tile = null;
-    //socket.emit('send move', move);
-  });
-
   //If user needs to get additional tile
   $('#tileButton').click(function(){
     socket.emit('request tile', gameId);
@@ -560,15 +522,28 @@ $(function () {
 
   //When tile is received
   socket.on('new tile', (tilesS) => {
-    console.log(tilesS[0]);
-    var fichaComida = {};
-    var tile={};
-    tile.id = tilesS[0].id;
-    tile.l1 = tilesS[0].l1;
-    tile.l2 = tilesS[0].l2;
-    fichaComida.tile= tile;
-    agregarFichaJuego(1,fichaComida,true);
-    $('#messages').append($('<li>').text(tile));
+    if(tilesS != null){
+      console.log(tilesS[0]);
+      var fichaComida = {};
+      var tile={};
+      tile.id = tilesS[0].id;
+      tile.l1 = tilesS[0].l1;
+      tile.l2 = tilesS[0].l2;
+      fichaComida.tile= tile;
+      agregarFichaJuego(1,fichaComida,true);
+      $('#messages').append($('<li>').text(tile));
+    }
+    else{
+      jugadorContinua = false;
+      var move = {};
+      move.gameId = gameId;
+      move.tile = null;
+      move.numberLeft = numberLeft;
+      move.numberRight = numberRight;
+      move.primerMovimiento = infoGame.primerMovimiento;
+      move.lastTile = null;
+      socket.emit('send move', move);
+    }
   });
 
   // When game is over

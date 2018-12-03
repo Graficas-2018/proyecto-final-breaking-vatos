@@ -65,7 +65,8 @@ module.exports = class Game {
   getTile(){
     if (this.tiles.length > 0) {
       return this.tiles.splice(0,1);
-    } else {
+    }
+    else {
       return null;
     }
   }
@@ -110,5 +111,48 @@ module.exports = class Game {
       this.turn = 0;
     }
     return p[this.turn];
+  }
+
+  gameOverTie(){
+    var _this = this;
+    var juegoTodos= [];
+    var count = 0;
+    this.players.forEach(function(value, key) {
+      //console.log(key + " : " + value);
+      juegoTodos.push(_this.players.get(key).jugadorPuedeContinuar);
+    });
+    for(var i =0; i< juegoTodos.length;i++){
+      if(!juegoTodos[i]){
+        count++;
+      }
+      else{
+        count = 0;
+      }
+    }
+    if(count >= 4){
+      return true;
+    }
+    else{
+      return false;
+    }
+
+  }
+
+  sumPointsPlayers(){
+    var _this = this;
+    var mayor = 0;
+    var jugadorGanador="";
+    this.players.forEach(function(value, key) {
+      //console.log(key + " : " + value);
+      var points = _this.players.get(key).countPoints();
+      if(points > mayor){
+        mayor = points;
+        jugadorGanador = _this.players.get(key).name;
+      }
+    });
+    var message={};
+    message.name = jugadorGanador;
+    message.points = mayor
+    return message;
   }
 };
