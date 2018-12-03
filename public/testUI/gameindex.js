@@ -23,7 +23,7 @@ var turn = false;
 var fichasJugador= [];
 var duration = 20000; // ms
 var currentTime = Date.now();
-
+var activated = false;
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
@@ -105,17 +105,16 @@ function completeTurn(){
       move.numberRight = numberRight;
       move.primerMovimiento = infoGame.primerMovimiento;
       move.lastTile = selection.id;
-      turnoJugador = false;
-      /*var index = fichasJugador.indexOf(selection.id);
+      var index = fichasJugador.indexOf(selection.id);
       lastTile = fichasJugador[index];
       if (index > -1) {
         fichasJugador.splice(index, 1);
       }
-      dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement);*/
-      var vacio = [];
-      dragControls = new THREE.DragControls(vacio, camera, renderer.domElement );
+      dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement);
       selection = null;
       movimientoValido = false;
+      activated = false;
+      turnoJugador = false;
       socket.emit('send move', move);
     }
     else{
@@ -356,6 +355,13 @@ function run() {
     animate();
     // Update the camera controller
     orbitControls.update();
+    if (!turnoJugador) {
+      dragControls.deactivate();
+    }
+    else if(turnoJugador){
+      dragControls.activate();
+      //activated = true;
+    }
 }
 
 
@@ -451,25 +457,20 @@ function darFichasJugador(number, eatTile){
 
 function agregarFichaJuego(number,move,isForUser){
   var j = 0, i =0;
-  if(!turnoJugador){
-    return;
-  }
-  else{
-    if(move.tile != null){
-      while(j < number){
-        var moSe =move.tile.id;
-        var fi = fichas[i].idFicha;
-        if (moSe === fi){
-          if(isForUser){
-            fichasJugador.push(fichas[i].children[0]);
-          }
-          scene.add(fichas[i]);
-          j++;
-          i=0;
+  if(move.tile != null){
+    while(j < number){
+      var moSe =move.tile.id;
+      var fi = fichas[i].idFicha;
+      if (moSe === fi){
+        if(isForUser){
+          fichasJugador.push(fichas[i].children[0]);
         }
-        else{
-          i++;
-        }
+        scene.add(fichas[i]);
+        j++;
+        i=0;
+      }
+      else{
+        i++;
       }
     }
   }
@@ -579,12 +580,13 @@ $(function () {
 
     console.log("NUEVO TURNO");
     if (obj.player == socket.id) {
+      dragControls.activate();
       alert("Es tu turno");
       turnoJugador = true;
       infoGame = obj;
       dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement );
-      if(!obj.primerMovimiento)
-        agregarFichaJuego(1,obj,false);
+      /*if(!obj.primerMovimiento)
+        agregarFichaJuego(1,obj,false);*/
     }
   });
 
@@ -592,6 +594,8 @@ $(function () {
   socket.on('new move', (move) => {
     console.log(move);
     if (move.tile != null) {
+      if(!move.primerMovimiento)
+        agregarFichaJuego(1,move,false);
       $('#messages').append($('<li>').text("El jugador "+ move.player +"  puso la ficha" + move.tile.l1 + ":" + move.tile.l2+". Los siguientes numeros validos son a la izquierda "+move.numberLeft+ " y a la derecha "+move.numberRight));
     }
     //Actualizar movimientos
