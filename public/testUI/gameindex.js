@@ -450,8 +450,8 @@ function createScene(canvas) {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     //*/cubemap
-		/*var path = "../images/cubemap/park/";
-		var format = '.png';
+		var path = "../images/cubemap/park/";
+		var format = '.jpg';
 
     var urls = [
 			path + 'px' + format, path + 'nx' + format,
@@ -464,7 +464,7 @@ function createScene(canvas) {
       reflectionCube.format = THREE.RGBFormat;
       scene.background = reflectionCube;
       renderer.render( scene, camera );
-    });*/
+    });
 
     loadTable();
 
