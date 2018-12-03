@@ -276,9 +276,6 @@ function run() {
     animate();
     // Update the camera controller
     orbitControls.update();
-    if(!infoGame.continuar){
-      //socket
-    }
 }
 
 
