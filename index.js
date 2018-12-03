@@ -109,29 +109,30 @@ io.on('connection', function(socket){
             games.delete(move.gameId);
           }
           else{
-            for (var player of games.get(move.gameId).players.values()) {
+            /*for (var player of games.get(move.gameId).players.values()) {
               io.sockets.connected[player.socketId].emit('new move', {player: socket.id, tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
-            }
+            }*/
             // Notificar movimiento y a quien le va
-            //io.to(move.gameId).emit('new move', {player: socket.id, tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
+            io.to(move.gameId).emit('new move', {player: socket.id, tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
             io.to(move.gameId).emit('next turn', {player: indexNextPlayer,tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento, dir: move.dir});
             //socket.broadcast.to(games.get(move.gameId).nextTurn()).emit('next turn', null);
           }
         }
       }
       else{
-        for (var player of games.get(move.gameId).players.values()) {
+        /*for (var player of games.get(move.gameId).players.values()) {
           io.sockets.connected[player.socketId].emit('new move', {player: socket.id, tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
-        }
+        }*/
+        io.to(move.gameId).emit('new move', {player: socket.id, tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
         io.to(move.gameId).emit('next turn', {player: indexNextPlayer,tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento, dir: move.dir});
       }
     }
     else{
-      for (var player of games.get(move.gameId).players.values()) {
+      /*for (var player of games.get(move.gameId).players.values()) {
         io.sockets.connected[player.socketId].emit('new move', {player: socket.id, tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
-      }
+      }*/
       // Notificar movimiento y a quien le va
-      //io.to(move.gameId).emit('new move', {player: socket.id, tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
+      io.to(move.gameId).emit('new move', {player: socket.id, tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
       io.to(move.gameId).emit('next turn', {player: indexNextPlayer,tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento, dir: move.dir});
     }
     //console.log("Jugador " + socket.id + " movio ficha: " + move.l1 + ":" + move.l2);

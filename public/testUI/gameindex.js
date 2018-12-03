@@ -9,7 +9,7 @@ socket = null,
 selection = null,
 gameId = null,
 fichas = [],tiles=null,
-movimientoValido = false, primerMovimiento = true,turnoJugador = false,numberLeft = -1, numberRight = -1,fichasIniciales = 7,
+movimientoValido = false, primerMovimiento = false,turnoJugador = false,numberLeft = -1, numberRight = -1,fichasIniciales = 7,
 orbitControls = null, raycaster = null, dragControls = null, infoGame= null, lastTile=null, jugadorContinua = true, loaded=false,
 destX = 0, destY = 0, destZ = 0,
 der1 = false, der2 = false, izq1 = false, izq2 = false;
@@ -73,25 +73,25 @@ function completeTurn(){
         der1 = true;
     }
     else{
-      if(infoGame.numberLeft == selection.l1){
+      if(infoGame.numberLeft === selection.l1){
         numberLeft = selection.l2;
         numberRight = infoGame.numberRight;
         movimientoValido = true;
         der2 = true;
       }
-      else if(infoGame.numberLeft == selection.l2){
+      else if(infoGame.numberLeft === selection.l2){
         numberLeft = selection.l1;
         numberRight = infoGame.numberRight;
         movimientoValido = true;
         der1 = true;
       }
-      else if(infoGame.numberRight == selection.l1){
+      else if(infoGame.numberRight === selection.l1){
         numberRight = selection.l2;
         numberLeft = infoGame.numberLeft;
         movimientoValido = true;
         izq2 = true;
       }
-      else if(infoGame.numberRight == selection.l2){
+      else if(infoGame.numberRight === selection.l2){
         numberRight = selection.l1;
         numberLeft = infoGame.numberLeft;
         movimientoValido = true;
@@ -180,6 +180,7 @@ function completeTurn(){
       activated = false;
     }
     else{
+      putDominoesOnCamera(fichasJugador);
       movimientoValido = false
       selection = null;
       return;
@@ -429,9 +430,9 @@ var SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 2048;
 function createScene(canvas) {
   scene = new THREE.Scene();
   raycaster = new THREE.Raycaster();
-  for (var i = 0; i <= maxPuntos; i++) {
+  for (var i = 1; i <= maxPuntos; i++) {
     var last = i;
-    for(var j = 0; j<=maxPuntos;j++){
+    for(var j = 1; j<=maxPuntos;j++){
       if (i > 0 && last > j) {
         j = last;
       }
@@ -481,7 +482,7 @@ function createScene(canvas) {
     var directionalLight = new THREE.DirectionalLight( 0xffffff, 1);
 
     // Create and add all the lights
-    directionalLight.position.set(-50, 30, 0);
+    directionalLight.position.set(170, 110, 220);
     root.add(directionalLight);
 
     // Create a group to hold the objects
@@ -672,7 +673,7 @@ $(function () {
       infoGame = obj;
       if(!obj.primerMovimiento)
       {
-        agregarFichaJuego(1,obj,false);
+      agregarFichaJuego(1,obj,false);
       }
       setTimeout(function()
       {
@@ -712,7 +713,7 @@ $(function () {
       fichaComida.tile= tile;
       fichaComida.dir = -1;
       agregarFichaJuego(1,fichaComida,true);
-      $('#messages').append($('<li>').text(JSON.stringify(tile)));
+      //$('#messages').append($('<li>').text(JSON.stringify(tile)));
     }
     else{
       jugadorContinua = false;
@@ -737,7 +738,8 @@ $(function () {
   //When game over
   socket.on('game over', (info) => {
     turnoJugador = false;
-    $('#messages').append($('<li>').text(info.message));
+    //$('#messages').append($('<li>').text(info.message));
+    alert(info.message);
   });
 
   // If any error happens
