@@ -83,38 +83,47 @@ io.on('connection', function(socket){
       if(move.primerMovimiento == true){
         move.primerMovimiento = false;
       }
+      for (var player of games.get(move.gameId).players.values()) {
+        player.canContinue(move);
+      }
       var actualPlayer = games.get(move.gameId).players.get(socket.id);
       var indexNextPlayer = games.get(move.gameId).nextTurn();
       var nextPlayer = games.get(move.gameId).players.get(indexNextPlayer);
       if(move.tile != null){
         actualPlayer.tileDelivered(move);
-      }
-      actualPlayer.canContinue(move);
-      nextPlayer.canContinue(move);
-      var numTiles = actualPlayer.getTiles();
-      console.log(actualPlayer.name+" "+JSON.stringify(numTiles));
-      if(numTiles.length <= 0){
-        var message ={message: "Ganador: "+actualPlayer.name};
-        io.to(move.gameId).emit('game over',message);
-        games.delete(move.gameId);
-        //return;
-      }
-      else {
-        if (games.get(move.gameId).gameOverTie()) {
-          var info = games.get(move.gameId).sumPointsPlayers();
-          var message ={message: "Ganador por puntos: "+info.name+" con "+info.points+"puntos"};
+        /*actualPlayer.canContinue(move);
+        nextPlayer.canContinue(move);*/
+        var numTiles = actualPlayer.getTiles();
+        console.log(actualPlayer.name+" "+JSON.stringify(numTiles));
+        if(numTiles.length <= 0){
+          var message ={message: "Ganador: "+actualPlayer.name};
           io.to(move.gameId).emit('game over',message);
           games.delete(move.gameId);
+          //return;
         }
-        else{
-          for (var player of games.get(move.gameId).players.values()) {
-            io.sockets.connected[player.socketId].emit('new move', {player: socket.id, tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
+        else {
+          if (games.get(move.gameId).gameOverTie()) {
+            var info = games.get(move.gameId).sumPointsPlayers();
+            var message ={message: "Ganador por puntos: "+info.name+" con "+info.points+"puntos"};
+            io.to(move.gameId).emit('game over',message);
+            games.delete(move.gameId);
           }
-          // Notificar movimiento y a quien le va
-          //io.to(move.gameId).emit('new move', {player: socket.id, tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
-          io.to(move.gameId).emit('next turn', {player: indexNextPlayer,tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento, dir: move.dir});
-          //socket.broadcast.to(games.get(move.gameId).nextTurn()).emit('next turn', null);
+          else{
+            for (var player of games.get(move.gameId).players.values()) {
+              io.sockets.connected[player.socketId].emit('new move', {player: socket.id, tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
+            }
+            // Notificar movimiento y a quien le va
+            //io.to(move.gameId).emit('new move', {player: socket.id, tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
+            io.to(move.gameId).emit('next turn', {player: indexNextPlayer,tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento, dir: move.dir});
+            //socket.broadcast.to(games.get(move.gameId).nextTurn()).emit('next turn', null);
+          }
         }
+      }
+      else{
+        for (var player of games.get(move.gameId).players.values()) {
+          io.sockets.connected[player.socketId].emit('new move', {player: socket.id, tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento});
+        }
+        io.to(move.gameId).emit('next turn', {player: indexNextPlayer,tile: move.tile ,numberLeft:move.numberLeft, numberRight:move.numberRight, primerMovimiento:move.primerMovimiento, dir: move.dir});
       }
     }
     else{

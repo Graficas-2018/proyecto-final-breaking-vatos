@@ -723,6 +723,8 @@ $(function () {
       move.numberRight = infoGame.numberRight;
       move.primerMovimiento = infoGame.primerMovimiento;
       move.lastTile = null;
+      changeCamera();
+      hideDominoes(fichasJugador);
       socket.emit('send move', move);
     }
   });
