@@ -44,7 +44,7 @@ module.exports = class Player {
 
   countPoints(){
     var points = 0;
-    for (tile of this.tiles) {
+    for (var tile of this.tiles) {
       points += tile.l1 + tile.l2;
     }
     return points;

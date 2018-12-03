@@ -10,8 +10,7 @@ selection = null,
 gameId = null,
 fichas = [],tiles=null,
 movimientoValido = false, primerMovimiento = true,turnoJugador = false,numberLeft = -1, numberRight = -1,fichasIniciales = 7,
-
-orbitControls = null, raycaster = null, dragControls = null, infoGame= null, lastTile=null, jugadorContinua = true,
+orbitControls = null, raycaster = null, dragControls = null, infoGame= null, lastTile=null, jugadorContinua = true, loaded=false,
 destX = 0,
 destY = 0,
 destZ = 0;
@@ -35,30 +34,25 @@ function onWindowResize()
     renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
+function onDragStart(event) {
+    var l1 = event.object.parent.l1;
+    var l2 = event.object.parent.l2;
+    var parent = event.object;
+    selection = {l1: l1,l2:l2,id:parent,idF:parent.parent.idFicha};
+    orbitControls.enabled = false;
+}
+function onDragEnd(event) {
+  orbitControls.enabled = true;
+  completeTurn();
+}
+
 function initControls(){
     orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
     orbitControls.minDistance = 0;
     orbitControls.maxDistance = 70;
     dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement );
-		dragControls.addEventListener( 'dragstart', function (event) {
-      if(!turnoJugador){
-        return;
-      }
-      else{
-        var l1 = event.object.parent.l1;
-        var l2 = event.object.parent.l2;
-        var parent = event.object;
-        selection = {l1: l1,l2:l2,id:parent,idF:parent.parent.idFicha};
-        orbitControls.enabled = false;
-      }
-		});
-		dragControls.addEventListener( 'dragend', function (event) {
-      if(!turnoJugador){
-        return;
-      }
-			orbitControls.enabled = true;
-      completeTurn();
-		});
+		dragControls.addEventListener('dragstart', onDragStart);
+		dragControls.addEventListener('dragend', onDragEnd);
 }
 
 function completeTurn(){
@@ -107,16 +101,18 @@ function completeTurn(){
       move.numberRight = numberRight;
       move.primerMovimiento = infoGame.primerMovimiento;
       move.lastTile = selection.id;
-      socket.emit('send move', move);
       turnoJugador = false;
-      var index = fichasJugador.indexOf(selection.id);
+      /*var index = fichasJugador.indexOf(selection.id);
       lastTile = fichasJugador[index];
       if (index > -1) {
         fichasJugador.splice(index, 1);
       }
-      dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement);
+      dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement);*/
+      var vacio = [];
+      dragControls = new THREE.DragControls(vacio, camera, renderer.domElement );
       selection = null;
       movimientoValido = false;
+      socket.emit('send move', move);
     }
     else{
       movimientoValido = false
@@ -375,19 +371,21 @@ function agregarFichaJuego(number,move,isForUser){
     return;
   }
   else{
-    while(j < number){
-      var moSe =move.tile.id;
-      var fi = fichas[i].idFicha;
-      if (moSe === fi){
-        if(isForUser){
-          fichasJugador.push(fichas[i].children[0]);
+    if(move.tile != null){
+      while(j < number){
+        var moSe =move.tile.id;
+        var fi = fichas[i].idFicha;
+        if (moSe === fi){
+          if(isForUser){
+            fichasJugador.push(fichas[i].children[0]);
+          }
+          scene.add(fichas[i]);
+          j++;
+          i=0;
         }
-        scene.add(fichas[i]);
-        j++;
-        i=0;
-      }
-      else{
-        i++;
+        else{
+          i++;
+        }
       }
     }
   }
@@ -439,7 +437,8 @@ $(function () {
       backdrop: 'static'
     });
     canvas.style.display = "block";
-    createScene(canvas)
+    //if(!loaded)
+      createScene(canvas);
   });
   // Host game
   $('#host').click(function() {
@@ -499,6 +498,7 @@ $(function () {
       alert("Es tu turno");
       turnoJugador = true;
       infoGame = obj;
+      dragControls = new THREE.DragControls(fichasJugador, camera, renderer.domElement );
       if(!obj.primerMovimiento)
         agregarFichaJuego(1,obj,false);
     }
@@ -543,14 +543,14 @@ $(function () {
     }
   });
 
-  // When game is over
+  /*/ When game is over
   $('#overButton').click(function(){
     socket.emit('game over', gameId);
-  });
+  });*/
 
   //When game over
   socket.on('game over', (info) => {
-
+    turnoJugador = false;
     $('#messages').append($('<li>').text(info.message));
   });
 

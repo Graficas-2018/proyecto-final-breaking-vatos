@@ -117,20 +117,24 @@ module.exports = class Game {
     var _this = this;
     var juegoTodos= [];
     var count = 0;
-    this.players.forEach(function(value, key) {
-      //console.log(key + " : " + value);
-      juegoTodos.push(_this.players.get(key).jugadorPuedeContinuar);
-    });
-    for(var i =0; i< juegoTodos.length;i++){
-      if(!juegoTodos[i]){
-        count++;
+    if (this.tiles.length <= 0) {
+      this.players.forEach(function(value, key) {
+        juegoTodos.push(_this.players.get(key).jugadorPuedeContinuar);
+      });
+      for(var i =0; i< juegoTodos.length;i++){
+        if(juegoTodos[i]==false){
+          count++;
+        }
+        else{
+          count = 0;
+        }
+      }
+      if(count >= this.players.size){
+        return true;
       }
       else{
-        count = 0;
+        return false;
       }
-    }
-    if(count >= 4){
-      return true;
     }
     else{
       return false;
