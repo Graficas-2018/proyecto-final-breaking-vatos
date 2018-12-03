@@ -531,15 +531,15 @@ $(function () {
       tile.l2 = tilesS[0].l2;
       fichaComida.tile= tile;
       agregarFichaJuego(1,fichaComida,true);
-      $('#messages').append($('<li>').text(tile));
+      $('#messages').append($('<li>').text(JSON.stringify(tile)));
     }
     else{
       jugadorContinua = false;
       var move = {};
       move.gameId = gameId;
       move.tile = null;
-      move.numberLeft = numberLeft;
-      move.numberRight = numberRight;
+      move.numberLeft = infoGame.numberLeft;
+      move.numberRight = infoGame.numberRight;
       move.primerMovimiento = infoGame.primerMovimiento;
       move.lastTile = null;
       socket.emit('send move', move);
