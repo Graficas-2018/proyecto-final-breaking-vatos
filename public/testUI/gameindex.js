@@ -470,7 +470,7 @@ function createScene(canvas) {
 
     // Add  a camera so we can view the scene
     camera = new THREE.PerspectiveCamera( 45, canvas.width / canvas.height, 1, 4000 );
-    camera.position.set(2, 50, 0);
+    camera.position.set(170, 110, 220);
     scene.add(camera);
 
     // Create a group to hold all the objects
@@ -482,7 +482,7 @@ function createScene(canvas) {
     var directionalLight = new THREE.DirectionalLight( 0xffffff, 1);
 
     // Create and add all the lights
-    directionalLight.position.set(170, 110, 220);
+    directionalLight.position.set(-50, 30, 0);
     root.add(directionalLight);
 
     // Create a group to hold the objects
